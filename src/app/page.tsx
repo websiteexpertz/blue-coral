@@ -5,8 +5,8 @@ import Footer from '@/components/Footer';
 import PropertyExperience from '@/app/components/PropertyExperience';
 import { getSiteContentData } from '@/lib/site-content-store';
 
-export default function HomePage() {
-  const siteContent = getSiteContentData();
+export default async function HomePage() {
+  const siteContent = await getSiteContentData();
 
   return (
     <>

@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { getSiteContentData, saveSiteContentData } from '@/lib/site-content-store';
 
 export async function GET() {
-  return NextResponse.json(getSiteContentData());
+  const data = await getSiteContentData();
+  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const content = saveSiteContentData(body);
+    const content = await saveSiteContentData(body);
     return NextResponse.json(content, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save website content.';
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const content = saveSiteContentData(body);
+    const content = await saveSiteContentData(body);
     return NextResponse.json(content);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save website content.';
