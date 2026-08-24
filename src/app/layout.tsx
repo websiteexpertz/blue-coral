@@ -2,6 +2,17 @@ import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, DM_Sans } from 'next/font/google';
 import '../styles/tailwind.css';
+import SiteContentProvider from './components/site/SiteContentProvider';
+import { getSiteContentData } from '@/lib/site-content-store';
+import { getMediaDocuments } from '@/lib/media-store';
+
+function resolveImageFromMedia(media: any[], key?: string) {
+  if (!key) return undefined;
+  const found = media.find((m) => m.key === key);
+  return found?.url;
+}
+
+export const dynamic = 'force-dynamic';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -79,11 +90,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const siteContent = await getSiteContentData();
+  // Resolve common image keys to actual URLs using media documents so
+  // the server-rendered HTML contains the final image URLs and doesn't
+  // swap them in on the client after media fetch.
+  try {
+    const media = await getMediaDocuments();
+    siteContent.hero.imageSrc =
+      siteContent.hero.imageSrc || resolveImageFromMedia(media, siteContent.hero.imageKey);
+    siteContent.about.imageSrc1 =
+      siteContent.about.imageSrc1 || resolveImageFromMedia(media, siteContent.about.imageKey1);
+    siteContent.about.imageSrc2 =
+      siteContent.about.imageSrc2 || resolveImageFromMedia(media, siteContent.about.imageKey2);
+    siteContent.location.mapImageSrc =
+      siteContent.location.mapImageSrc ||
+      resolveImageFromMedia(media, siteContent.location.mapImageKey);
+    siteContent.thingsToDo.imageSrc =
+      siteContent.thingsToDo.imageSrc ||
+      resolveImageFromMedia(media, siteContent.thingsToDo.imageKey);
+  } catch (err) {
+    // ignore — fall back to defaults or client-side media fetch
+  }
+
   return (
     <html suppressHydrationWarning lang="en" className={`${fraunces.variable} ${dmSans.variable}`}>
       <body suppressHydrationWarning className={dmSans.className}>
-        {children}
+        <SiteContentProvider initialContent={siteContent}>{children}</SiteContentProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
