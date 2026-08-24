@@ -46,6 +46,11 @@ function sanitizeMediaInput<T extends Record<string, unknown>>(input: T) {
   return rest as T;
 }
 
+function stripMongoId<T extends { _id?: unknown }>(item: T): Omit<T, '_id'> {
+  const { _id, ...rest } = item;
+  return rest as Omit<T, '_id'>;
+}
+
 function normalizeMediaDocument(item: MediaDocument) {
   const normalized = { ...item } as MediaDocument;
 
@@ -162,7 +167,8 @@ export async function ensureMediaSeedData(): Promise<MediaDocument[]> {
   if (collection) {
     const count = await collection.countDocuments();
     if (count > 0) {
-      return collection.find({}).sort({ section: 1, order: 1, key: 1 }).toArray();
+      const docs = await collection.find({}).sort({ section: 1, order: 1, key: 1 }).toArray();
+      return docs.map(stripMongoId) as MediaDocument[];
     }
 
     const timestamp = new Date().toISOString();
@@ -197,7 +203,9 @@ export async function ensureMediaSeedData(): Promise<MediaDocument[]> {
 export async function getMediaDocuments(): Promise<MediaDocument[]> {
   const collection = await getMediaCollection();
   if (collection) {
-    const docs = await collection.find({}).sort({ section: 1, order: 1, key: 1 }).toArray();
+    const docs = (await collection.find({}).sort({ section: 1, order: 1, key: 1 }).toArray()).map(
+      stripMongoId
+    ) as MediaDocument[];
     if (docs.length === 0) {
       return ensureMediaSeedData();
     }
@@ -317,5 +325,6 @@ export async function reorderGalleryMedia(items: Array<{ id: string; order: numb
     await collection.updateOne({ id: item.id }, { $set: { order: item.order, updatedAt: timestamp } });
   }
 
-  return collection.find({ section: 'gallery' }).sort({ order: 1, key: 1 }).toArray();
+  const reordered = await collection.find({ section: 'gallery' }).sort({ order: 1, key: 1 }).toArray();
+  return reordered.map(stripMongoId) as MediaDocument[];
 }

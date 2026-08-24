@@ -280,8 +280,10 @@ function getDateRange(startDate: string, endDate: string) {
 
 export default function PropertyExperience({
   initialContent,
+  initialMedia = [],
 }: {
   initialContent?: import('@/lib/site-content-types').SiteContentData;
+  initialMedia?: import('@/lib/media-store').MediaDocument[];
 }) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -296,7 +298,7 @@ export default function PropertyExperience({
     checkIn: null,
     checkOut: null,
   });
-  const { getItem, getItemByKey, getGallery, getSection } = useSiteMedia();
+  const { getItem, getItemByKey, getGallery, getSection } = useSiteMedia(initialMedia);
   const { content } = useSiteContent(initialContent);
   const homepagePreviewItems = getSection('gallery', 'homepage');
   const heroStats = content.hero.stats;

@@ -25,6 +25,7 @@ export default function AdminWebsitePage() {
   const [message, setMessage] = useState('');
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [galleryMedia, setGalleryMedia] = useState<MediaDocument[]>([]);
+  const [homepageGallery, setHomepageGallery] = useState<MediaDocument[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(false);
   const [savingGallery, setSavingGallery] = useState(false);
 
@@ -50,8 +51,18 @@ export default function AdminWebsitePage() {
               (item: MediaDocument) => item.section === 'gallery' && item.type === 'full'
             )
           : [];
+        const homepageItems = Array.isArray(media)
+          ? media.filter(
+              (item: MediaDocument) => item.section === 'gallery' && item.type === 'homepage'
+            )
+          : [];
         setGalleryMedia(
           galleryItems.sort((a: MediaDocument, b: MediaDocument) => (a.order ?? 0) - (b.order ?? 0))
+        );
+        setHomepageGallery(
+          homepageItems.sort(
+            (a: MediaDocument, b: MediaDocument) => (a.position ?? 0) - (b.position ?? 0)
+          )
         );
       } catch {
         // ignore
@@ -236,6 +247,48 @@ export default function AdminWebsitePage() {
       clearSiteMediaCache();
     } catch {
       // ignore
+    }
+  };
+
+  const uploadHomepageGalleryImage = async (position: number, file: File, dataUrl: string) => {
+    const existingItem = homepageGallery.find((item) => item.position === position);
+    const payload = {
+      section: 'gallery',
+      type: 'homepage',
+      key: existingItem?.key || `gallery-homepage-${position}`,
+      alt: file.name,
+      url: dataUrl,
+      order: position,
+      position,
+      id: existingItem?.id,
+      createdAt: existingItem?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as MediaDocument;
+
+    try {
+      const response = await fetch('/api/admin/media', {
+        method: existingItem ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unable to save homepage image.' }));
+        throw new Error(error?.error || 'Unable to save homepage image.');
+      }
+
+      const saved = (await response.json()) as MediaDocument;
+      setHomepageGallery((current) => {
+        const next = current.filter((item) => item.position !== position);
+        return [...next, saved].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      });
+      clearSiteMediaCache();
+      setMessage('Homepage gallery image saved successfully.');
+      window.setTimeout(() => setMessage(''), 3200);
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : 'Unable to save homepage image.';
+      setMessage(messageText);
+      window.setTimeout(() => setMessage(''), 3200);
     }
   };
 
@@ -796,6 +849,56 @@ export default function AdminWebsitePage() {
                 Upload and manage the gallery images displayed on the full gallery page and homepage
                 gallery section.
               </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="mb-3 text-base font-semibold text-slate-900">Homepage gallery</h3>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[1, 2, 3, 4].map((position) => {
+                  const item = homepageGallery.find((entry) => entry.position === position);
+                  return (
+                    <div key={position} className="rounded-2xl border border-slate-200 bg-white p-3">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-medium text-slate-700">Position {position}</p>
+                        {item ? (
+                          <button
+                            type="button"
+                            onClick={() => deleteGalleryImage(item.id)}
+                            className="rounded-full border border-rose-200 p-2 text-rose-600"
+                            title="Remove homepage image"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className="relative h-40 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        {item ? (
+                          <AppImage
+                            src={item.url}
+                            alt={item.alt || `Homepage gallery position ${position}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 25vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center p-4 text-center text-xs text-slate-500">
+                            No image assigned for this slot.
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3">
+                        <MediaUploader
+                          onSelect={async (file, dataUrl) => {
+                            await uploadHomepageGalleryImage(position, file, dataUrl);
+                          }}
+                          label={item ? 'Replace image' : 'Upload image'}
+                          compact
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div>

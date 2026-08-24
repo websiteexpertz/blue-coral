@@ -1,13 +1,18 @@
 import React from 'react';
-import Link from 'next/link';
 import Header from '@/components/Header';
 import GalleryPageClient from '@/app/components/GalleryPageClient';
+import { getMediaDocuments } from '@/lib/media-store';
 
 export const metadata = {
   title: 'Gallery - Blue Coral Villa',
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const galleryItems = await getMediaDocuments();
+  const initialGallery = galleryItems.filter(
+    (item) => item.section === 'gallery' && item.type === 'full'
+  );
+
   return (
     <>
       <Header />
@@ -22,7 +27,7 @@ export default function GalleryPage() {
             </p>
           </header>
 
-          <GalleryPageClient />
+          <GalleryPageClient initialGallery={initialGallery} />
         </div>
       </main>
     </>

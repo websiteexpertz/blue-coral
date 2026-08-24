@@ -5,10 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
 import { useSiteMedia } from '@/app/components/media/useSiteMedia';
+import type { MediaDocument } from '@/lib/media-store';
 
-export default function GalleryPageClient() {
+export default function GalleryPageClient({
+  initialGallery = [],
+}: {
+  initialGallery?: MediaDocument[];
+}) {
   const [index, setIndex] = useState<number | null>(null);
-  const { getGallery } = useSiteMedia();
+  const { getGallery, isLoading } = useSiteMedia(initialGallery);
   const galleryImages = getGallery();
 
   const open = (i: number) => {
@@ -59,7 +64,7 @@ export default function GalleryPageClient() {
         </div>
 
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
-          {galleryImages.length === 0 ? (
+          {!isLoading && galleryImages.length === 0 ? (
             <div className="rounded-[20px] border border-dashed border-border bg-muted/40 p-8 text-center text-sm text-muted-foreground">
               Gallery images will appear here once media items are added in the admin panel.
             </div>

@@ -11,8 +11,17 @@ export default function GalleryPreviewSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const { getGallery } = useSiteMedia();
-  const galleryItems = getGallery();
+  const { getGallery, getSection } = useSiteMedia();
+  const homepageItems = getSection('gallery', 'homepage');
+  const fullGalleryItems = getGallery();
+
+  const galleryItems = useMemo(() => {
+    if (homepageItems.length > 0) {
+      return homepageItems.slice(0, 4);
+    }
+
+    return fullGalleryItems.slice(0, 4);
+  }, [fullGalleryItems, homepageItems]);
 
   // Transform media items to gallery format
   const galleryImages = useMemo(() => {
