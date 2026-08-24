@@ -3,8 +3,10 @@ const PASSWORD = process.env.CRM_AUTH_PASSWORD;
 const SECRET = process.env.CRM_AUTH_SECRET;
 const COOKIE_NAME = 'crm_session';
 
-if (!USERNAME || !PASSWORD || !SECRET) {
-  throw new Error('CRM auth environment variables are not configured. Set CRM_AUTH_USERNAME, CRM_AUTH_PASSWORD, and CRM_AUTH_SECRET.');
+function ensureEnvConfigured() {
+  if (!USERNAME || !PASSWORD || !SECRET) {
+    throw new Error('CRM auth environment variables are not configured. Set CRM_AUTH_USERNAME, CRM_AUTH_PASSWORD, and CRM_AUTH_SECRET.');
+  }
 }
 
 const COOKIE_MAX_AGE = 60 * 60; // 1 hour
@@ -30,6 +32,7 @@ async function createSignature(payload: string) {
 }
 
 export async function createAuthCookie() {
+  ensureEnvConfigured();
   const payload = `${USERNAME}:${Date.now()}`;
   const signature = await createSignature(payload);
   return `${payload}:${signature}`;
@@ -46,6 +49,7 @@ export async function verifyAuthCookie(cookie: string | undefined) {
   }
 
   const [username, timestamp, signature] = parts;
+  if (!USERNAME) return false;
   if (username !== USERNAME) {
     return false;
   }
@@ -55,6 +59,7 @@ export async function verifyAuthCookie(cookie: string | undefined) {
 }
 
 export function validateCredentials(username: string, password: string) {
+  if (!USERNAME || !PASSWORD) return false;
   return username === USERNAME && password === PASSWORD;
 }
 
