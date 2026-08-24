@@ -118,7 +118,7 @@ export async function getAvailabilityBookingsForMonth(
         $or: [
           { status: 'approved' },
           { status: { $exists: false } },
-          { status: null },
+          { status: '' },
         ],
       })
       .project<BookingDocument>({

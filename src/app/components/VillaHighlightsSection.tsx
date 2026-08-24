@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { BedDouble, Bath, Waves, Anchor, MapPin, Zap, Wind, ChefHat } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
+import { useSiteContent } from '@/app/components/site/useSiteContent';
 
 /*
 BENTO GRID AUDIT:
@@ -19,88 +20,21 @@ Mobile (grid-cols-1): all cards stack, no empty cells ✓
 Tablet (grid-cols-2): each card cs-1, 8 cells fill 4 rows ✓
 */
 
-const highlights = [
-  {
-    id: 'bedrooms',
-    icon: BedDouble,
-    title: 'Four Bedrooms',
-    description:
-      'Spacious, elegantly appointed bedrooms with premium linens and ocean-facing windows.',
-    accent: true,
-    colSpan: 'lg:col-span-2',
-    rowSpan: '',
-  },
-  {
-    id: 'bathrooms',
-    icon: Bath,
-    title: 'Four Bathrooms',
-    description: 'En-suite and shared bathrooms finished to hotel standards.',
-    accent: false,
-    colSpan: 'lg:col-span-1',
-    rowSpan: '',
-  },
-  {
-    id: 'waterfront',
-    icon: Waves,
-    title: 'Waterfront Views',
-    description: "Uninterrupted views across Fisher\'s Bay from every vantage point.",
-    accent: false,
-    colSpan: 'lg:col-span-1',
-    rowSpan: '',
-  },
-  {
-    id: 'dock',
-    icon: Anchor,
-    title: 'Shared Dock',
-    description:
-      'Direct water access from a shared dock — perfect for arriving by boat or setting off to explore.',
-    accent: false,
-    colSpan: 'lg:col-span-1',
-    rowSpan: '',
-  },
-  {
-    id: 'location',
-    icon: MapPin,
-    title: 'Prime Location',
-    description:
-      'Walking distance to renowned restaurants, pristine beaches, and the local grocery store. Great Guana Cay at your doorstep.',
-    accent: true,
-    colSpan: 'lg:col-span-2',
-    rowSpan: '',
-  },
-  {
-    id: 'generator',
-    icon: Zap,
-    title: 'Backup Generator',
-    description: 'Uninterrupted comfort with a full backup generator — peace of mind in paradise.',
-    accent: false,
-    colSpan: 'lg:col-span-1',
-    rowSpan: '',
-  },
-  {
-    id: 'ac',
-    icon: Wind,
-    title: 'Air Conditioning',
-    description: 'Full air conditioning throughout the villa, complemented by ceiling fans.',
-    accent: false,
-    colSpan: 'lg:col-span-2',
-    rowSpan: '',
-  },
-  {
-    id: 'kitchen',
-    icon: ChefHat,
-    title: 'Fully Equipped Kitchen',
-    description:
-      'A chef-ready kitchen with everything you need for home-cooked meals, from morning coffee to sunset dinners.',
-    accent: false,
-    colSpan: 'lg:col-span-2',
-    rowSpan: '',
-  },
-];
+const featureIcons = [BedDouble, Bath, Waves, Anchor, MapPin, Zap, Wind, ChefHat];
 
 export default function VillaHighlightsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const { content } = useSiteContent();
+  const highlights = content.villaFeatures.highlights.map((item, index) => ({
+    id: `feature-${index}`,
+    icon: featureIcons[index % featureIcons.length],
+    title: item.title,
+    description: item.description,
+    accent: index === 0 || index === 4,
+    colSpan: index === 0 || index === 4 || index === 6 ? 'lg:col-span-2' : 'lg:col-span-1',
+    rowSpan: '',
+  }));
 
   return (
     <section
@@ -120,7 +54,9 @@ export default function VillaHighlightsSection() {
               className="flex items-center gap-3 mb-4"
             >
               <div className="accent-rule" />
-              <span className="label-caps text-muted-foreground">Villa Features</span>
+              <span className="label-caps text-muted-foreground">
+                {content.villaFeatures.eyebrow}
+              </span>
             </motion.div>
             <motion.h2
               initial={{ opacity: 0, y: 24 }}
@@ -128,9 +64,7 @@ export default function VillaHighlightsSection() {
               transition={{ duration: 0.9, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="section-headline text-foreground"
             >
-              Everything You Need.
-              <br />
-              Nothing You Don&apos;t.
+              {content.villaFeatures.title}
             </motion.h2>
           </div>
           <motion.p
@@ -139,8 +73,7 @@ export default function VillaHighlightsSection() {
             transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="text-muted-foreground text-base max-w-sm leading-relaxed md:text-right"
           >
-            Blue Coral Landing is designed for those who appreciate the finer things — without
-            sacrificing the soul of island living.
+            {content.villaFeatures.description}
           </motion.p>
         </div>
 
@@ -201,15 +134,7 @@ export default function VillaHighlightsSection() {
           className="mt-8 bg-card border border-border rounded-2xl px-8 py-6 flex flex-wrap gap-4 items-center justify-between"
         >
           <p className="label-caps text-muted-foreground">Also included</p>
-          {[
-            'Smart Speakers',
-            'Roku TV',
-            'YouTube TV',
-            'Ceiling Fans',
-            'Waterfront Porch',
-            'Two Living Areas',
-            'Dining Area',
-          ]?.map((amenity) => (
+          {content.villaFeatures.footerItems?.map((amenity) => (
             <span
               key={amenity}
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"

@@ -5,63 +5,26 @@ import { motion, useInView } from 'framer-motion';
 import { Waves, UtensilsCrossed, ShoppingBag, Anchor, Sun } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
+import { useSiteContent } from '@/app/components/site/useSiteContent';
 
-const attractions = [
-  {
-    id: 'beach',
-    icon: Waves,
-    title: 'World-Class Beaches',
-    description:
-      "Pristine white sand and turquoise waters are a short walk away. Great Guana Cay\'s beaches are consistently ranked among the Bahamas\' finest.",
-    tag: 'Walking Distance',
-    src: '/12.jpg',
-    alt: 'Pristine white sand beach with turquoise water, bright sunny day, no crowds, tropical paradise Bahamas',
-  },
-  {
-    id: 'restaurants',
-    icon: UtensilsCrossed,
-    title: 'Renowned Restaurants',
-    description:
-      'Nippers Beach Bar & Grill and other celebrated dining destinations are steps away — fresh seafood, tropical cocktails, and island atmosphere.',
-    tag: 'Walking Distance',
-    src: '/13.jpg',
-    alt: 'Beachside restaurant with ocean view, outdoor seating, warm evening light, tropical Caribbean setting',
-  },
-  {
-    id: 'grocery',
-    icon: ShoppingBag,
-    title: 'Local Grocery Store',
-    description:
-      'A convenient grocery store nearby means you can stock your fully-equipped kitchen with fresh local produce and provisions.',
-    tag: 'Nearby',
-    src: '/16.jpg',
-    alt: 'Colorful fresh produce and local goods at a small tropical island market, bright natural lighting',
-  },
-  {
-    id: 'dock',
-    icon: Anchor,
-    title: 'Shared Dock & Water Access',
-    description:
-      'Arrive by boat, launch a kayak, or simply sit at the end of the dock and watch the day unfold over the bay.',
-    tag: 'On Property',
-    src: '/17.jpg',
-    alt: 'Wooden dock extending over calm turquoise water, clear blue sky, tropical island setting, peaceful morning',
-  },
-  {
-    id: 'island',
-    icon: Sun,
-    title: 'Island Life',
-    description:
-      "Great Guana Cay is one of the Abacos' most cherished out-islands — quiet, authentic, and utterly beautiful.",
-    tag: 'The Island',
-    src: '/20.jpg',
-    alt: 'Aerial view of small tropical island with lush green vegetation surrounded by crystal clear turquoise water',
-  },
-];
+const attractionIcons = [Waves, UtensilsCrossed, ShoppingBag, Anchor, Sun];
 
 export default function NearbyAttractionsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const { getItem, getItemByKey } = useSiteMedia();
+  const { content } = useSiteContent();
+  const attractions = content.location.cards.map((item, index) => ({
+    id: `attraction-${index}`,
+    icon: attractionIcons[index % attractionIcons.length],
+    title: item.title,
+    description: item.description,
+    tag: item.tag,
+    src: item.src,
+    key: item.key,
+    alt: item.alt,
+  }));
 
   return (
     <section
@@ -80,7 +43,7 @@ export default function NearbyAttractionsSection() {
             className="flex items-center justify-center gap-3 mb-4"
           >
             <div className="accent-rule" />
-            <span className="label-caps text-muted-foreground">Location</span>
+            <span className="label-caps text-muted-foreground">{content.location.eyebrow}</span>
             <div className="accent-rule" />
           </motion.div>
           <motion.h2
@@ -89,9 +52,7 @@ export default function NearbyAttractionsSection() {
             transition={{ duration: 0.9, delay: 0.1 }}
             className="section-headline text-foreground mb-4"
           >
-            Great Guana Cay
-            <br />
-            at Your Doorstep
+            {content.location.title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -99,10 +60,7 @@ export default function NearbyAttractionsSection() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-muted-foreground text-base max-w-xl mx-auto leading-relaxed"
           >
-            Located in Great Guana Cay, this waterfront cottage is perfectly positioned for beach
-            days, island dining, and water adventures. Treasure Cay Marina and Marsh Harbour are
-            worth exploring, while Guana Cay Beach and Tilloo National Park offer beautiful natural
-            scenery.
+            {content.location.description}
           </motion.p>
         </div>
 
@@ -125,7 +83,7 @@ export default function NearbyAttractionsSection() {
                 {/* Image */}
                 <div className="relative overflow-hidden aspect-video">
                   <AppImage
-                    src={item?.src}
+                    src={item.src || getItemByKey(item.key as string, item.src)}
                     alt={item?.alt}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -163,22 +121,21 @@ export default function NearbyAttractionsSection() {
         >
           <div>
             <h3 className="font-serif text-xl font-light text-foreground mb-3">
-              What&apos;s nearby
+              {content.location.listTitle}
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Guana Cay Beach — 19 min walk</li>
-              <li>Tilloo National Park — nearby for nature and scenic exploration</li>
+              {content.location.listItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </div>
 
           <div>
             <h3 className="font-serif text-xl font-light text-foreground mb-3">Restaurants</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Mermaids On The Rocks — 9 min walk</li>
-              <li>Sparky&apos;s — 2 min drive</li>
-              <li>Kidd&apos;s Cove Seafood Bar &amp; Grill — 4 min drive</li>
-              <li>Nippers — 4 min drive</li>
-              <li>Atlantic Club — 8 min drive</li>
+              {(content.nearbyAttractions.restaurants ?? []).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </div>
         </motion.div>
@@ -193,7 +150,10 @@ export default function NearbyAttractionsSection() {
         >
           <div className="relative aspect-[21/7] min-h-[200px] overflow-hidden">
             <AppImage
-              src="/21.jpg"
+              src={
+                content.location.mapImageSrc ||
+                getItemByKey(content.location.mapImageKey, getItem('nearby-map', '/21.jpg'))
+              }
               alt="Aerial satellite view of Great Guana Cay, Bahamas showing turquoise waters and island geography"
               fill
               sizes="100vw"
@@ -204,11 +164,11 @@ export default function NearbyAttractionsSection() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="bg-card/95 backdrop-blur-sm border border-border rounded-xl px-8 py-5 text-center shadow-xl">
                 <p className="font-serif text-xl font-light text-foreground mb-1">
-                  Great Guana Cay, Abaco
+                  {content.location.mapTitle}
                 </p>
-                <p className="label-caps text-muted-foreground">Bahamas · Fisher&apos;s Bay</p>
+                <p className="label-caps text-muted-foreground">{content.location.mapSubtitle}</p>
                 <a
-                  href="https://maps.google.com/?q=Great+Guana+Cay+Bahamas"
+                  href={content.location.mapLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 mt-3 label-caps text-primary hover:text-accent transition-colors duration-300"

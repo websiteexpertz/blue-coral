@@ -1,96 +1,148 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Lock, ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { LayoutDashboard, CalendarDays, Image, Globe2, Settings2 } from 'lucide-react';
+import DashboardCard from '@/app/components/admin/DashboardCard';
+import PageHeader from '@/app/components/admin/PageHeader';
 
-export default function CrmLoginPage() {
-  const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+export default function AdminDashboardPage() {
+  const [bookingCount, setBookingCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [mediaCount, setMediaCount] = useState(0);
+  const [homepageCount, setHomepageCount] = useState(0);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setSubmitting(true);
+  useEffect(() => {
+    void fetch('/api/bookings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBookingCount(data.length);
+          setPendingCount(data.filter((item) => item.status === 'pending').length);
+        }
+      })
+      .catch(() => undefined);
 
-    const response = await fetch('/api/crm-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
+    void fetch('/api/admin/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMediaCount(data.length);
+          setHomepageCount(
+            data.filter((item: any) => item.section === 'gallery' && item.type === 'homepage')
+              .length
+          );
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
-    setSubmitting(false);
-
-    if (!response.ok) {
-      const body = await response.json();
-      setError(body.error || 'Unable to sign in.');
-      return;
-    }
-
-    router.push('/crm');
-  };
+  const stats = useMemo(
+    () => [
+      {
+        title: 'Total bookings',
+        value: bookingCount,
+        description: 'All reservations in the system.',
+      },
+      {
+        title: 'Pending requests',
+        value: pendingCount,
+        description: 'New inquiries waiting for review.',
+      },
+      {
+        title: 'Media assets',
+        value: mediaCount,
+        description: 'Images and visual assets available for the website.',
+      },
+      {
+        title: 'Homepage gallery',
+        value: homepageCount,
+        description: 'Active homepage gallery items.',
+      },
+    ],
+    [bookingCount, homepageCount, mediaCount, pendingCount]
+  );
 
   return (
-    <main className="min-h-screen bg-[#07131f] text-white px-6 py-24 lg:px-10">
-      <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-        <div className="mb-10 flex flex-col gap-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <Lock size={24} />
+    <div className="space-y-8">
+      <PageHeader
+        title="Dashboard"
+        description="Your admin workspace for managing bookings, media, website content, and settings."
+      />
+
+      <div className="grid gap-6 xl:grid-cols-4">
+        {stats.map((card) => (
+          <DashboardCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            description={card.description}
+          />
+        ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+          <div className="mb-6 flex items-center gap-3 text-slate-900">
+            <LayoutDashboard className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">Overview</h2>
           </div>
-          <p className="label-caps text-accent">CRM Portal</p>
-          <h1 className="section-headline text-white">Secure login for guest inquiry management</h1>
-          <p className="max-w-2xl text-muted-foreground mx-auto">
-            Access the CRM dashboard to review and manage submitted inquiries for Blue Coral
-            Landing.
+          <p className="text-sm leading-relaxed text-slate-600">
+            Use the sidebar to navigate between booking operations, media management, website
+            content, and application settings. This dashboard helps you monitor pending guest
+            inquiries and the current media library at a glance.
+          </p>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+          <div className="mb-6 flex flex-col gap-3">
+            <div className="flex items-center gap-3 text-slate-900">
+              <CalendarDays className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">Actionable items</h2>
+            </div>
+            <div className="grid gap-4">
+              <div className="rounded-[1.5rem] border border-white/10 bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Review bookings</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">{pendingCount} pending</p>
+              </div>
+              <div className="rounded-[1.5rem] border border-white/10 bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">Update media</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">{mediaCount} assets</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+          <div className="mb-4 flex items-center gap-3 text-slate-900">
+            <Image className="h-5 w-5" />
+            <h3 className="text-base font-semibold">Media</h3>
+          </div>
+          <p className="text-sm leading-relaxed text-slate-600">
+            Manage the visual experience for the landing page and gallery from a single location.
           </p>
         </div>
-
-        <form onSubmit={handleSubmit} className="grid gap-5">
-          {error ? (
-            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-              {error}
-            </div>
-          ) : null}
-
-          <label className="grid gap-2 text-sm text-muted-foreground">
-            Username
-            <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-              placeholder="Enter username"
-              autoComplete="username"
-              required
-            />
-          </label>
-
-          <label className="grid gap-2 text-sm text-muted-foreground">
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
-              placeholder="Enter password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="luxury-btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-70"
-          >
-            {submitting ? 'Signing In...' : 'Sign In'}
-            <ArrowRight size={18} />
-          </button>
-        </form>
+        <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+          <div className="mb-4 flex items-center gap-3 text-slate-900">
+            <Globe2 className="h-5 w-5" />
+            <h3 className="text-base font-semibold">Website</h3>
+          </div>
+          <p className="text-sm leading-relaxed text-slate-600">
+            Publish updates for content sections, amenities, and featured villa experiences in the
+            website editor.
+          </p>
+        </div>
+        <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+          <div className="mb-4 flex items-center gap-3 text-slate-900">
+            <Settings2 className="h-5 w-5" />
+            <h3 className="text-base font-semibold">Settings</h3>
+          </div>
+          <p className="text-sm leading-relaxed text-slate-600">
+            Adjust branding and administrative preferences for the dashboard and site operations.
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

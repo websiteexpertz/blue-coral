@@ -26,42 +26,17 @@ import {
   Monitor,
 } from 'lucide-react';
 import ContactCTASection from '@/app/components/ContactCTASection';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
+import { useSiteContent } from '@/app/components/site/useSiteContent';
 
-const heroStats = [
-  { value: '4', label: 'Bedrooms' },
-  { value: '4', label: 'Bathrooms' },
-  { value: '8', label: 'Guests' },
-  { value: '$650', label: 'From / Night' },
+const highlightIcons = [Anchor, Waves, Compass, Sparkles];
+
+const homepagePreviewFallbacks = [
+  { key: 'gallery-homepage-1', url: '/3.jpg', alt: 'Homepage image 1' },
+  { key: 'gallery-homepage-2', url: '/4.jpg', alt: 'Homepage image 2' },
+  { key: 'gallery-homepage-3', url: '/5.jpg', alt: 'Homepage image 3' },
+  { key: 'gallery-homepage-4', url: '/6.jpg', alt: 'Homepage image 4' },
 ];
-
-const highlights = [
-  {
-    title: 'Private Dock',
-    description:
-      'Step from the cottage to your own dock for boats, sunrise swims, and effortless island access.',
-    icon: Anchor,
-  },
-  {
-    title: 'Sea of Abaco Views',
-    description:
-      'Panoramic water views from the tower bedroom and sunroom create a front-row seat to the horizon.',
-    icon: Waves,
-  },
-  {
-    title: '3-Minute Beach Walk',
-    description:
-      'Enjoy easy access to the Atlantic shoreline and the soft rhythm of island mornings.',
-    icon: Compass,
-  },
-  {
-    title: 'Bahamian Charm',
-    description:
-      'Colorful architecture and warm interiors reflect the island’s signature Junkanoo spirit.',
-    icon: Sparkles,
-  },
-];
-
-const galleryPreviewImages = ['/3.jpg', '/4.jpg', '/5.jpg', '/6.jpg'];
 
 const amenitiesByCategory = [
   {
@@ -241,28 +216,6 @@ const reviews = [
   },
 ];
 
-const faqItems = [
-  {
-    question: 'How many guests can the cottage accommodate?',
-    answer:
-      'Blue Coral Landing sleeps up to 8 guests across four bedrooms and four full bathrooms.',
-  },
-  {
-    question: 'Is the dock suitable for boats?',
-    answer:
-      'Yes, guests can dock their own boat and enjoy direct waterfront access to the Sea of Abaco.',
-  },
-  {
-    question: 'Is the property family-friendly?',
-    answer:
-      'Absolutely. The home welcomes children and families while maintaining a peaceful luxury atmosphere.',
-  },
-  {
-    question: 'How close is the property to the beach?',
-    answer: 'The Atlantic beach is only a short 3-minute walk away.',
-  },
-];
-
 function SectionHeading({
   eyebrow,
   title,
@@ -325,7 +278,11 @@ function getDateRange(startDate: string, endDate: string) {
   return range;
 }
 
-export default function PropertyExperience() {
+export default function PropertyExperience({
+  initialContent,
+}: {
+  initialContent?: import('@/lib/site-content-types').SiteContentData;
+}) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const initialDate = new Date();
@@ -339,6 +296,26 @@ export default function PropertyExperience() {
     checkIn: null,
     checkOut: null,
   });
+  const { getItem, getItemByKey, getGallery, getSection } = useSiteMedia();
+  const { content } = useSiteContent(initialContent);
+  const homepagePreviewItems = getSection('gallery', 'homepage');
+  const heroStats = content.hero.stats;
+  const highlights = content.about.highlights.map((item, index) => ({
+    title: item.title,
+    description: item.description,
+    icon: highlightIcons[index % highlightIcons.length],
+  }));
+
+  const amenitiesSection = content.amenities;
+  const roomsSection = content.rooms;
+  const nearbyAttractionsSection = content.nearbyAttractions;
+  const thingsToDoSection = content.thingsToDo;
+  const houseRulesSection = content.houseRules;
+  const importantInformationSection = content.importantInformation;
+  const neighborhoodSection = content.neighborhood;
+  const faqSection = content.faq;
+  const guestReviewsSection = content.guestReviews;
+  const contactSection = content.contact;
 
   const openPreview = useCallback((index: number) => {
     setPreviewIndex(index);
@@ -350,13 +327,19 @@ export default function PropertyExperience() {
 
   const goPrevPreview = useCallback(() => {
     setPreviewIndex((prev) =>
-      prev !== null ? (prev - 1 + galleryPreviewImages.length) % galleryPreviewImages.length : null
+      prev !== null && homepagePreviewItems.length > 0
+        ? (prev - 1 + homepagePreviewItems.length) % homepagePreviewItems.length
+        : null
     );
-  }, []);
+  }, [homepagePreviewItems.length]);
 
   const goNextPreview = useCallback(() => {
-    setPreviewIndex((prev) => (prev !== null ? (prev + 1) % galleryPreviewImages.length : null));
-  }, []);
+    setPreviewIndex((prev) =>
+      prev !== null && homepagePreviewItems.length > 0
+        ? (prev + 1) % homepagePreviewItems.length
+        : null
+    );
+  }, [homepagePreviewItems.length]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -456,7 +439,10 @@ export default function PropertyExperience() {
       <section id="hero" className="relative min-h-screen overflow-hidden">
         <div className="absolute inset-0">
           <AppImage
-            src="/12.jpg"
+            src={
+              content.hero.imageSrc ||
+              getItemByKey(content.hero.imageKey, getItem('villa-hero', '/12.jpg'))
+            }
             alt="Waterfront cottage on the Sea of Abaco with a private dock and turquoise water"
             fill
             priority
@@ -476,22 +462,19 @@ export default function PropertyExperience() {
           >
             <div className="mb-6 flex items-center gap-3">
               <div className="h-px w-10 bg-accent" />
-              <p className="label-caps text-white/80">Luxury Waterfront Vacation Rental</p>
+              <p className="label-caps text-white/80">{content.hero.eyebrow}</p>
             </div>
-            <h1 className="hero-headline max-w-4xl text-white">
-              Blue Coral Landing, a private island hideaway on the Sea of Abaco.
-            </h1>
+            <h1 className="hero-headline max-w-4xl text-white">{content.hero.title}</h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl">
-              Experience authentic island living with a private dock, breezy waterfront views, and
-              easy access to the Atlantic in Great Guana Cay.
+              {content.hero.subtitle}
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link href="#contact" className="luxury-btn-primary">
-                Reserve Your Stay
+                {content.hero.ctaPrimary}
                 <ArrowRight size={15} />
               </Link>
               <Link href="#villa" className="luxury-btn-outline">
-                Explore the Cottage
+                {content.hero.ctaSecondary}
               </Link>
             </div>
           </motion.div>
@@ -515,9 +498,9 @@ export default function PropertyExperience() {
           <div className="grid items-stretch gap-12 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-8">
               <SectionHeading
-                eyebrow="About this property"
-                title="Blue Coral Landing 4 Bedroom 4 Bath With Dock, Guana Cay, Abaco, Bahamas."
-                text="Blue Coral Landing is a four-bedroom, four-bathroom waterfront cottage with a dock on the Sea of Abaco, designed for relaxed luxury and unforgettable island stays. The villa features a new sunroom, a master dining room with wet bar, and a tower bedroom with sweeping views over the Sea of Abaco. Sleeps up to 8 guests and is located directly on the water, just a short walk to the Atlantic Ocean and close to restaurants, shops, and the famous Nippers."
+                eyebrow={content.about.eyebrow}
+                title={content.about.title}
+                text={content.about.text}
               />
               <div className="grid gap-4 sm:grid-cols-2">
                 {highlights.map((item) => {
@@ -545,7 +528,9 @@ export default function PropertyExperience() {
               <div className="grid grid-rows-2 gap-3 h-full min-h-0">
                 <div className="relative w-full overflow-hidden rounded-[1.25rem]">
                   <AppImage
-                    src="/12.jpg"
+                    src={
+                      content.about.imageSrc1 || getItemByKey(content.about.imageKey1, '/12.jpg')
+                    }
                     alt="Bright and airy interior with tropical décor and open living space"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -554,7 +539,9 @@ export default function PropertyExperience() {
                 </div>
                 <div className="relative w-full overflow-hidden rounded-[1.25rem]">
                   <AppImage
-                    src="/13.jpg"
+                    src={
+                      content.about.imageSrc2 || getItemByKey(content.about.imageKey2, '/13.jpg')
+                    }
                     alt="Whitewashed interiors with natural textures and island charm"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -578,9 +565,9 @@ export default function PropertyExperience() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {galleryPreviewImages.map((src, index) => (
+            {homepagePreviewItems.map((image, index) => (
               <motion.div
-                key={src}
+                key={image.id ?? image.key}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
@@ -590,8 +577,8 @@ export default function PropertyExperience() {
               >
                 <div className="relative h-72 overflow-hidden">
                   <AppImage
-                    src={src}
-                    alt="Luxury waterfront villa detail"
+                    src={image.url || getItemByKey(image.key, '/3.jpg')}
+                    alt={image.alt || 'Luxury waterfront villa detail'}
                     fill
                     sizes="(max-width: 768px) 100vw, 25vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -667,14 +654,19 @@ export default function PropertyExperience() {
                 >
                   <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[24px] bg-black">
                     <AppImage
-                      src={galleryPreviewImages[previewIndex]}
-                      alt="Luxury waterfront villa detail"
+                      src={
+                        homepagePreviewItems[previewIndex].url ||
+                        getItemByKey(homepagePreviewItems[previewIndex].key, '/3.jpg')
+                      }
+                      alt={
+                        homepagePreviewItems[previewIndex].alt || 'Luxury waterfront villa detail'
+                      }
                       fill
                       className="object-contain"
                     />
                   </div>
                   <p className="mt-4 text-center text-white/70">
-                    {previewIndex + 1} / {galleryPreviewImages.length}
+                    {previewIndex + 1} / {homepagePreviewItems.length}
                   </p>
                 </motion.div>
               </motion.div>
@@ -697,29 +689,27 @@ export default function PropertyExperience() {
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-20">
             {/* LEFT - editorial heading */}
             <div className="lg:w-[45%]">
-              <p className="text-accent text-sm font-medium mb-4">Amenities</p>
+              <p className="text-accent text-sm font-medium mb-4">{amenitiesSection.eyebrow}</p>
               <h2 className="font-serif text-[clamp(2.25rem,4vw,4rem)] font-light leading-tight text-foreground">
-                Comfort, design, and island essentials in every room.
+                {amenitiesSection.title}
               </h2>
               <p className="mt-6 text-lg text-muted-foreground max-w-prose">
-                A waterfront retreat with thoughtful comforts, easy indoor–outdoor living, and the
-                practical details that make island stays effortless.
+                {amenitiesSection.text}
               </p>
             </div>
 
             {/* RIGHT - compact feature cards + stats + accordion */}
             <div className="lg:w-[55%]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {features.map((feature, i) => (
+                {amenitiesSection.highlights.map((feature, i) => (
                   <motion.div
-                    key={feature.title}
+                    key={`${feature.title}-${i}`}
                     whileHover={{ y: -6 }}
                     transition={{ duration: 0.35, ease: 'easeOut' }}
                     className="rounded-2xl border border-border bg-white p-5 shadow-sm flex flex-col"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <span className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-accent">
-                        {/* small decorative icon */}
                         <Sparkles size={18} />
                       </span>
                       <h4 className="text-lg font-semibold text-foreground leading-tight">
@@ -733,24 +723,21 @@ export default function PropertyExperience() {
 
               {/* Stats strip */}
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { label: 'Guest Favorite', value: '★★★★★' },
-                  { label: 'Bedrooms', value: '4' },
-                  { label: 'Bathrooms', value: '4' },
-                  { label: 'Private Dock', value: 'Yes' },
-                ].map((s) => (
+                {amenitiesSection.categories.slice(0, 4).map((category) => (
                   <div
-                    key={s.label}
+                    key={category.title}
                     className="rounded-xl border border-border bg-white p-3 text-center text-sm"
                   >
-                    <div className="text-muted-foreground text-xs">{s.label}</div>
-                    <div className="font-medium text-foreground mt-1">{s.value}</div>
+                    <div className="text-muted-foreground text-xs">{category.title}</div>
+                    <div className="font-medium text-foreground mt-1">
+                      {category.items.slice(0, 1).join(', ') || 'Details'}
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Accordion lists */}
-              <AmenitiesAccordion groups={amenitiesByCategory} />
+              <AmenitiesAccordion groups={amenitiesSection.categories} />
             </div>
           </div>
         </div>
@@ -760,9 +747,9 @@ export default function PropertyExperience() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-10">
             <SectionHeading
-              eyebrow="Rooms & Spaces"
-              title="Thoughtful rooms and inviting spaces for relaxed island living."
-              text="The villa is designed for comfort, family stays, and easy indoor-outdoor living with a strong focus on water views and waterfront access."
+              eyebrow={roomsSection.eyebrow}
+              title={roomsSection.title}
+              text={roomsSection.text}
             />
           </div>
           <div className="grid gap-6 lg:grid-cols-2">
@@ -772,9 +759,9 @@ export default function PropertyExperience() {
                 <span className="label-caps">Bedrooms</span>
               </div>
               <div className="space-y-4">
-                {bedrooms.map((bedroom, index) => (
+                {roomsSection.bedrooms.map((bedroom, index) => (
                   <motion.div
-                    key={bedroom.title}
+                    key={`${bedroom.title}-${index}`}
                     initial={{ opacity: 0, y: 18 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.2 }}
@@ -797,7 +784,7 @@ export default function PropertyExperience() {
                   <span className="label-caps">Bathrooms</span>
                 </div>
                 <div className="space-y-3">
-                  {bathrooms.map((item) => (
+                  {roomsSection.bathrooms.map((item) => (
                     <div key={item} className="rounded-2xl border border-border bg-soft px-4 py-3">
                       <p className="text-sm font-medium text-foreground">{item}</p>
                     </div>
@@ -811,7 +798,7 @@ export default function PropertyExperience() {
                   <span className="label-caps">Spaces</span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {spaces.map((item) => (
+                  {roomsSection.spaces.map((item) => (
                     <div key={item} className="rounded-2xl border border-border bg-soft px-4 py-3">
                       <p className="text-sm font-medium text-foreground">{item}</p>
                     </div>
@@ -826,16 +813,15 @@ export default function PropertyExperience() {
       <section id="rates" className="px-6 py-24 lg:px-10">
         <div className="mx-auto max-w-7xl grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[2rem] border border-border bg-foreground p-8 text-white shadow-[0_25px_80px_rgba(27,79,107,0.15)] lg:p-10">
-            <p className="label-caps text-accent">Nearby Attractions</p>
+            <p className="label-caps text-accent">{nearbyAttractionsSection.eyebrow}</p>
             <h2 className="section-headline mt-3 max-w-xl text-white">
-              The island is your playground, with beaches and dining just beyond the dock.
+              {nearbyAttractionsSection.title}
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-white/70">
-              Whether you prefer swimming, diving, sightseeing, or a sunset dinner nearby, the
-              location is ideal for both adventure and rest.
+              {nearbyAttractionsSection.text}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {['Waterfront', 'Boat Friendly', 'Family Friendly', 'Sunset Views'].map((pill) => (
+              {nearbyAttractionsSection.pills.map((pill) => (
                 <span
                   key={pill}
                   className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/80"
@@ -852,25 +838,21 @@ export default function PropertyExperience() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <MapPin size={17} />
                 </div>
-                <p className="label-caps text-[0.86rem] sm:text-[0.95rem]">What&apos;s Nearby</p>
+                <p className="label-caps text-[0.86rem] sm:text-[0.95rem]">Highlights</p>
               </div>
-              <h3 className="sub-headline mt-3 text-[clamp(1.4rem,2.2vw,1.75rem)] leading-tight text-foreground">
-                Guana Cay Beach
-              </h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3.5 py-2 text-[0.95rem] font-medium text-foreground sm:px-4">
-                  <MapPin size={15} />
-                  19 min walk
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3.5 py-2 text-[0.95rem] font-medium text-foreground sm:px-4">
-                  <Compass size={15} />
-                  1.6 km
-                </span>
+              <div className="mt-4 space-y-4">
+                {nearbyAttractionsSection.attractions.slice(0, 3).map((item, index) => (
+                  <div
+                    key={`${item.name}-${index}`}
+                    className="rounded-2xl border border-border bg-white/80 p-4"
+                  >
+                    <h3 className="font-serif text-lg text-foreground">{item.name}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <p className="mt-3 text-[0.95rem] leading-7 text-muted-foreground sm:text-[1rem]">
-                Soft sand, clear water, and easy access to the island&apos;s signature coastal
-                charm.
-              </p>
             </div>
 
             <div className="flex min-h-[0] flex-1 flex-col justify-start rounded-[1.75rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,250,0.96))] p-5 shadow-[0_20px_70px_rgba(27,79,107,0.06)] sm:p-6 lg:flex-[0.6]">
@@ -905,12 +887,13 @@ export default function PropertyExperience() {
       <section className="px-6 py-24 lg:px-10">
         <div className="mx-auto max-w-7xl grid gap-8 lg:grid-cols-[1fr_0.9fr]">
           <div className="flex flex-col rounded-[2rem] border border-border bg-white p-8 shadow-[0_20px_70px_rgba(27,79,107,0.05)] lg:p-10">
-            <p className="label-caps text-primary">Things To Do</p>
-            <h2 className="section-headline mt-3 text-foreground">
-              From reef adventures to quiet afternoons on the porch.
-            </h2>
+            <SectionHeading
+              eyebrow={thingsToDoSection.eyebrow}
+              title={thingsToDoSection.title}
+              text={thingsToDoSection.text}
+            />
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {activities.map((activity) => (
+              {thingsToDoSection.activities.map((activity) => (
                 <div
                   key={activity}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3"
@@ -923,7 +906,13 @@ export default function PropertyExperience() {
             <div className="mt-6 flex-1 overflow-hidden rounded-[1.5rem] border border-border bg-muted/30">
               <div className="relative h-full min-h-[220px] sm:min-h-[260px] lg:min-h-[300px]">
                 <AppImage
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+                  src={
+                    thingsToDoSection.imageSrc ||
+                    getItemByKey(
+                      thingsToDoSection.imageKey,
+                      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e'
+                    )
+                  }
                   alt="Tropical island shoreline with clear water"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -934,12 +923,10 @@ export default function PropertyExperience() {
           </div>
 
           <div className="rounded-[2rem] border border-border bg-[linear-gradient(135deg,rgba(27,79,107,0.08),rgba(201,169,110,0.08))] p-8 shadow-[0_20px_70px_rgba(27,79,107,0.05)] lg:p-10">
-            <p className="label-caps text-primary">House Rules</p>
-            <h2 className="section-headline mt-3 text-foreground">
-              A polished stay with clear expectations.
-            </h2>
+            <p className="label-caps text-primary">{houseRulesSection.eyebrow}</p>
+            <h2 className="section-headline mt-3 text-foreground">{houseRulesSection.title}</h2>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {rules.map((rule) => (
+              {houseRulesSection.rules.map((rule) => (
                 <div
                   key={rule.label}
                   className="rounded-[1.25rem] border border-border bg-white/80 p-4"
@@ -951,9 +938,12 @@ export default function PropertyExperience() {
             </div>
 
             <div className="mt-8 rounded-[1.5rem] border border-border bg-white/80 p-6">
-              <p className="label-caps text-primary">Important information</p>
+              <p className="label-caps text-primary">{importantInformationSection.eyebrow}</p>
+              <h3 className="font-serif text-xl text-foreground mt-3">
+                {importantInformationSection.title}
+              </h3>
               <div className="mt-4 space-y-3">
-                {importantNotes.map((note) => (
+                {importantInformationSection.notes.map((note) => (
                   <div
                     key={note}
                     className="rounded-2xl border border-border bg-muted/40 px-4 py-3"
@@ -973,7 +963,10 @@ export default function PropertyExperience() {
             <div className="overflow-hidden rounded-[2rem] border border-border bg-white shadow-[0_20px_70px_rgba(27,79,107,0.05)]">
               <div className="relative h-full min-h-[360px] overflow-hidden lg:min-h-[460px]">
                 <AppImage
-                  src="https://images.unsplash.com/photo-1468413253725-0d5181091126"
+                  src={getItem(
+                    'villa-location',
+                    'https://images.unsplash.com/photo-1468413253725-0d5181091126'
+                  )}
                   alt="Aerial view of the Bahamas shoreline and tropical island landscape"
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
@@ -983,17 +976,14 @@ export default function PropertyExperience() {
             </div>
 
             <div className="rounded-[2rem] border border-border bg-white p-8 shadow-[0_20px_70px_rgba(27,79,107,0.05)] lg:p-10">
-              <p className="label-caps text-primary">About the neighborhood</p>
-              <h2 className="section-headline mt-3 text-foreground">
-                Great Guana Cay, Abaco, Bahamas
-              </h2>
+              <p className="label-caps text-primary">{neighborhoodSection.eyebrow}</p>
+              <h2 className="section-headline mt-3 text-foreground">{neighborhoodSection.title}</h2>
               <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-                Set on the Sea of Abaco, the cottage offers easy boat access, a short walk to the
-                Atlantic, and a peaceful island setting that feels wonderfully removed.
+                {neighborhoodSection.text}
               </p>
               <div className="mt-8 space-y-3">
                 <a
-                  href="https://maps.app.goo.gl/sqZFRcTkxm8AAKyx8"
+                  href={neighborhoodSection.mapLink}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3 transition hover:border-primary/40 hover:bg-white"
@@ -1001,18 +991,15 @@ export default function PropertyExperience() {
                   <MapPin size={16} className="text-primary" />
                   <span className="text-sm text-foreground">Open location on Google Maps</span>
                 </a>
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3">
-                  <Compass size={16} className="text-primary" />
-                  <span className="text-sm text-foreground">
-                    3-minute walk to the Atlantic beach
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3">
-                  <ShieldCheck size={16} className="text-primary" />
-                  <span className="text-sm text-foreground">
-                    Private dock, secure parking, and easy island access
-                  </span>
-                </div>
+                {neighborhoodSection.highlights.map((highlight) => (
+                  <div
+                    key={highlight}
+                    className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3"
+                  >
+                    <ShieldCheck size={16} className="text-primary" />
+                    <span className="text-sm text-foreground">{highlight}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1023,13 +1010,13 @@ export default function PropertyExperience() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-10">
             <SectionHeading
-              eyebrow="Guest Reviews"
-              title="Trusted by travelers seeking a more refined island stay."
-              text="Guests return for the effortless rhythm of the property, the comfort of the interiors, and the views that seem to change with every hour."
+              eyebrow={guestReviewsSection.eyebrow}
+              title={guestReviewsSection.title}
+              text={guestReviewsSection.text}
             />
           </div>
           <div className="grid gap-5 lg:grid-cols-3">
-            {reviews.map((review) => (
+            {guestReviewsSection.reviews.map((review) => (
               <div
                 key={review.author}
                 className="rounded-[1.5rem] border border-border bg-white p-6 shadow-[0_20px_70px_rgba(27,79,107,0.05)]"
@@ -1158,26 +1145,53 @@ export default function PropertyExperience() {
                   <span>All dates are currently available. Book your perfect stay.</span>
                 )}
               </div>
+
+              {selection.checkIn && selection.checkOut ? (
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = document.getElementById('contact');
+                      if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        window.setTimeout(() => {
+                          const nameInput = document.querySelector(
+                            '#contact input[name="name"]'
+                          ) as HTMLInputElement | null;
+                          nameInput?.focus();
+                        }, 450);
+                      }
+                    }}
+                    className="luxury-btn-primary"
+                    aria-label="Book selected dates"
+                  >
+                    Book Now — {selection.checkIn} → {selection.checkOut}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
       </section>
 
       <section id="contact" className="px-6 pb-24 lg:px-10">
-        <ContactCTASection />
+        <ContactCTASection
+          initialArrivalDate={selection.checkIn ?? undefined}
+          initialDepartureDate={selection.checkOut ?? undefined}
+        />
       </section>
 
       <section className="px-6 pb-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10">
             <SectionHeading
-              eyebrow="Frequently Asked Questions"
-              title="Everything you need to know before your stay."
-              text="A few details to help you plan a seamless arrival and a memorable island escape."
+              eyebrow={faqSection.eyebrow}
+              title={faqSection.title}
+              text={faqSection.text}
             />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
-            {faqItems.map((item) => (
+            {(faqSection.items ?? []).map((item) => (
               <div
                 key={item.question}
                 className="rounded-[1.5rem] border border-border bg-white p-6 shadow-[0_20px_70px_rgba(27,79,107,0.05)]"

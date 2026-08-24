@@ -4,22 +4,33 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
-import { galleryImages, GalleryImage } from '@/lib/gallery-images';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
 
 export default function GalleryPageClient() {
   const [index, setIndex] = useState<number | null>(null);
+  const { getGallery } = useSiteMedia();
+  const galleryImages = getGallery();
 
-  const open = (i: number) => setIndex(i);
+  const open = (i: number) => {
+    if (galleryImages[i]) {
+      setIndex(i);
+    }
+  };
   const close = () => setIndex(null);
-  const prev = useCallback(
-    () =>
-      setIndex((i) => (i !== null ? (i - 1 + galleryImages.length) % galleryImages.length : null)),
-    []
-  );
-  const next = useCallback(
-    () => setIndex((i) => (i !== null ? (i + 1) % galleryImages.length : null)),
-    []
-  );
+  const prev = useCallback(() => {
+    if (galleryImages.length === 0) {
+      return;
+    }
+
+    setIndex((i) => (i !== null ? (i - 1 + galleryImages.length) % galleryImages.length : 0));
+  }, [galleryImages.length]);
+  const next = useCallback(() => {
+    if (galleryImages.length === 0) {
+      return;
+    }
+
+    setIndex((i) => (i !== null ? (i + 1) % galleryImages.length : 0));
+  }, [galleryImages.length]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -33,41 +44,60 @@ export default function GalleryPageClient() {
   }, [index, prev, next]);
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
-        {galleryImages.map((img, i) => (
-          <motion.div
-            key={img.id}
-            className="break-inside-avoid mb-4 rounded-[20px] overflow-hidden cursor-pointer shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.35 }}
-            onClick={() => open(i)}
-            role="button"
-            tabIndex={0}
-            aria-label={`View ${img.caption} fullscreen`}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                open(i);
-              }
-            }}
-          >
-            <div className={`relative w-full ${img.aspectClass || 'aspect-[4/3]'}`}>
-              <AppImage
-                src={img.src}
-                alt={img.alt}
-                fill
-                quality={85}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
-              />
+    <div className="space-y-16">
+      <section className="rounded-[2rem] border border-border bg-white p-6 shadow-[0_25px_80px_rgba(27,79,107,0.08)]">
+        <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="label-caps text-primary">Full Villa Gallery</p>
+            <h2 className="section-headline text-foreground">
+              An editorial collection of the villa’s photography
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl">
+              Click any image to enter the immersive viewer.
+            </p>
+          </div>
+        </div>
+
+        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
+          {galleryImages.length === 0 ? (
+            <div className="rounded-[20px] border border-dashed border-border bg-muted/40 p-8 text-center text-sm text-muted-foreground">
+              Gallery images will appear here once media items are added in the admin panel.
             </div>
-          </motion.div>
-        ))}
-      </div>
+          ) : null}
+          {galleryImages.map((img: { id: string; url: string; alt: string }, i: number) => (
+            <motion.div
+              key={img.id}
+              className="break-inside-avoid mb-4 rounded-[20px] overflow-hidden cursor-pointer shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.35 }}
+              onClick={() => open(i)}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${img.alt || 'gallery image'} fullscreen`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  open(i);
+                }
+              }}
+            >
+              <div className="relative w-full aspect-[4/3]">
+                <AppImage
+                  src={img.url}
+                  alt={img.alt}
+                  fill
+                  quality={85}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
       <AnimatePresence>
-        {index !== null && (
+        {index !== null && galleryImages[index] ? (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
             initial={{ opacity: 0 }}
@@ -82,7 +112,7 @@ export default function GalleryPageClient() {
                 e.stopPropagation();
                 close();
               }}
-              aria-label="Close gallery"
+              aria-label="Close preview"
             >
               ✕
             </button>
@@ -123,7 +153,7 @@ export default function GalleryPageClient() {
             >
               <div className="relative w-full h-[80vh] overflow-hidden rounded-[24px] bg-black">
                 <AppImage
-                  src={galleryImages[index].src}
+                  src={galleryImages[index].url}
                   alt={galleryImages[index].alt}
                   fill
                   priority
@@ -131,7 +161,7 @@ export default function GalleryPageClient() {
                 />
               </div>
               <div className="mt-4 text-center text-white">
-                <h3 className="text-lg font-medium">{galleryImages[index].caption}</h3>
+                <h3 className="text-lg font-medium">{galleryImages[index].alt}</h3>
                 <p className="mt-2 text-sm text-white/70">{galleryImages[index].alt}</p>
                 <div className="mt-2 text-sm text-white/50">
                   {index + 1} / {galleryImages.length}
@@ -139,7 +169,7 @@ export default function GalleryPageClient() {
               </div>
             </motion.div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );

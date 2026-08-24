@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -18,6 +19,7 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { getItem } = useSiteMedia();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -58,7 +60,7 @@ export default function Header() {
             aria-label="Blue Coral Landing home"
           >
             <Image
-              src="/logo.png"
+              src={getItem('logo', '/logo.png')}
               alt="Blue Coral Landing logo"
               width={180}
               height={180}

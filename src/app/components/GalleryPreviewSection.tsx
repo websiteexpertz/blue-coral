@@ -1,16 +1,34 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
-import { galleryImages } from '@/lib/gallery-images';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
 
 export default function GalleryPreviewSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const { getGallery } = useSiteMedia();
+  const galleryItems = getGallery();
+
+  // Transform media items to gallery format
+  const galleryImages = useMemo(() => {
+    if (galleryItems.length === 0) {
+      return [];
+    }
+    return galleryItems.map((item) => ({
+      id: item.id,
+      src: item.url,
+      alt: item.alt,
+      caption: item.alt || 'Gallery image',
+      colSpan: 'lg:col-span-1',
+      rowSpan: '',
+      aspectClass: 'aspect-[4/3]',
+    }));
+  }, [galleryItems]);
 
   const openLightbox = useCallback((i: number) => setLightboxIndex(i), []);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
@@ -18,10 +36,10 @@ export default function GalleryPreviewSection() {
     setLightboxIndex((prev) =>
       prev !== null ? (prev - 1 + galleryImages.length) % galleryImages.length : 0
     );
-  }, []);
+  }, [galleryImages.length]);
   const nextImage = useCallback(() => {
     setLightboxIndex((prev) => (prev !== null ? (prev + 1) % galleryImages.length : 0));
-  }, []);
+  }, [galleryImages.length]);
 
   React.useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -33,6 +51,10 @@ export default function GalleryPreviewSection() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [lightboxIndex, closeLightbox, prevImage, nextImage]);
+
+  if (galleryImages.length === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -74,12 +96,12 @@ export default function GalleryPreviewSection() {
           </motion.a>
         </div>
 
-        {/* Bento Gallery Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-3 lg:h-[640px]">
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {galleryImages.map((img, i) => (
             <motion.div
               key={img.id}
-              className={`gallery-item relative overflow-hidden rounded-xl cursor-pointer ${img.colSpan} ${img.rowSpan} ${img.aspectClass}`}
+              className="gallery-item relative overflow-hidden rounded-xl cursor-pointer aspect-[4/3]"
               initial={{ opacity: 0, scale: 0.97 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{
@@ -195,7 +217,7 @@ export default function GalleryPreviewSection() {
             >
               <div className="relative aspect-[16/10] w-full">
                 <AppImage
-                  src={galleryImages[lightboxIndex].src.replace(/w=\d+&h=\d+/, 'w=1600&h=1000')}
+                  src={galleryImages[lightboxIndex].src}
                   alt={galleryImages[lightboxIndex].alt}
                   fill
                   priority

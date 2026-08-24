@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAuthCookie, getAuthCookieName } from '@/lib/crm-auth';
+import { verifySessionCookie, getSessionCookieName } from '@/lib/admin-session';
 
-function unauthorized() {
+function unauthorized(request?: NextRequest) {
+  if (request) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   const response = new NextResponse('Unauthorized', {
     status: 401,
   });
-  response.headers.set('Location', '/crm-login');
+  response.headers.set('Location', '/login');
   return response;
 }
 
@@ -14,18 +18,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
-    pathname === '/crm-login' ||
+    pathname === '/login' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
-    pathname.startsWith('/api/crm-login')
+    pathname.startsWith('/api/admin/login') ||
+    pathname.startsWith('/api/admin/session')
   ) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/crm') || pathname.startsWith('/api/crm')) {
-    const cookie = request.cookies.get(getAuthCookieName())?.value;
-    if (!await verifyAuthCookie(cookie)) {
-      return unauthorized();
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    const cookie = request.cookies.get(getSessionCookieName())?.value;
+    if (!await verifySessionCookie(cookie)) {
+      return unauthorized(request);
     }
   }
 
@@ -33,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/crm/:path*', '/api/crm/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };

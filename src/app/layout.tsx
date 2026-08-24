@@ -22,8 +22,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const defaultSiteUrl = 'http://localhost:3000';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || defaultSiteUrl;
+let metadataBaseUrl: URL;
+
+try {
+  metadataBaseUrl = new URL(siteUrl);
+} catch {
+  metadataBaseUrl = new URL(defaultSiteUrl);
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: metadataBaseUrl,
   title: 'Blue Coral Landing — Luxury Waterfront Villa in the Bahamas',
   description:
     "Blue Coral Landing is a four-bedroom luxury waterfront villa on Great Guana Cay, Bahamas. Stunning Fisher's Bay views, private dock access, and world-class amenities from $650/night.",

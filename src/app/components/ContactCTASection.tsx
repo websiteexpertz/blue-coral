@@ -5,6 +5,8 @@ import { motion, useInView } from 'framer-motion';
 import { Send, Phone, Mail, MapPin } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
+import { useSiteMedia } from '@/app/components/media/useSiteMedia';
+import { useSiteContent } from '@/app/components/site/useSiteContent';
 
 interface FormData {
   name: string;
@@ -83,7 +85,13 @@ const getEarliestDepartureDate = (arrivalDate: string) => {
   return formatDateForInput(minimumStayEnd);
 };
 
-export default function ContactCTASection() {
+export default function ContactCTASection({
+  initialArrivalDate,
+  initialDepartureDate,
+}: {
+  initialArrivalDate?: string;
+  initialDepartureDate?: string;
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [form, setForm] = useState<FormData>(initialForm);
@@ -92,8 +100,26 @@ export default function ContactCTASection() {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [dateError, setDateError] = useState<string | null>(null);
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
+  const { getItem } = useSiteMedia();
+  const { content } = useSiteContent();
 
   useEffect(() => {
+    // Populate arrival/departure when provided from calendar selection.
+    // Only update if the incoming value is present and different from current form value.
+    setForm((prev) => {
+      const next = { ...prev } as FormData;
+      let changed = false;
+      if (initialArrivalDate && initialArrivalDate !== prev.arrivalDate) {
+        next.arrivalDate = initialArrivalDate;
+        changed = true;
+      }
+      if (initialDepartureDate && initialDepartureDate !== prev.departureDate) {
+        next.departureDate = initialDepartureDate;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+
     const loadBlockedDates = async () => {
       try {
         const { startDate, endDate } = getAvailabilityRangeWindow();
@@ -117,7 +143,7 @@ export default function ContactCTASection() {
     }, 15000);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [initialArrivalDate, initialDepartureDate]);
 
   const validateDateRange = (nextForm: FormData) => {
     if (!nextForm.arrivalDate || !nextForm.departureDate) {
@@ -251,7 +277,7 @@ export default function ContactCTASection() {
       {/* Background image */}
       <div className="absolute inset-0 opacity-10">
         <AppImage
-          src="/33.jpg"
+          src={getItem('contact', '/33.jpg')}
           alt="Aerial view of turquoise Bahamian waters, dark atmospheric, night, deep blue ocean"
           fill
           sizes="100vw"
@@ -279,7 +305,7 @@ export default function ContactCTASection() {
                 transition={{ duration: 0.9, delay: 0.1 }}
                 className="section-headline text-white mb-6"
               >
-                Begin Your Bahamian Escape
+                {content.contact.title}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 16 }}
@@ -287,9 +313,7 @@ export default function ContactCTASection() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-white/50 text-base leading-relaxed mb-10"
               >
-                We&apos;d love to host you at Blue Coral Landing. Send us a message with your
-                preferred dates and we&apos;ll be in touch with availability and a personalised
-                quote.
+                {content.contact.text}
               </motion.p>
 
               {/* Contact details */}
@@ -303,20 +327,20 @@ export default function ContactCTASection() {
                   {
                     icon: Mail,
                     label: 'Email',
-                    value: 'info@bluecorallandingbahamas.com',
-                    href: 'mailto:info@bluecorallandingbahamas.com',
+                    value: content.contact.email,
+                    href: `mailto:${content.contact.email}`,
                   },
                   {
                     icon: Phone,
                     label: 'Phone',
-                    value: '+1 (242) 555-0190',
-                    href: 'tel:+12425550190',
+                    value: content.contact.phone,
+                    href: `tel:${content.contact.phone.replace(/[^+0-9]/g, '')}`,
                   },
                   {
                     icon: MapPin,
                     label: 'Location',
-                    value: 'Great Guana Cay, Abaco, Bahamas',
-                    href: 'https://maps.google.com/?q=Great+Guana+Cay+Bahamas',
+                    value: content.neighborhood.title,
+                    href: content.neighborhood.mapLink,
                   },
                 ].map(({ icon: Icon, label, value, href }) => (
                   <a

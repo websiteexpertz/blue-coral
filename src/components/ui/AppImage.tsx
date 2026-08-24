@@ -40,21 +40,43 @@ const AppImage = memo(function AppImage({
   unoptimized = false,
   ...props
 }: AppImageProps) {
-  const [imageSrc, setImageSrc] = useState(src);
+  const normalizeSrc = (value: string | undefined) => {
+    if (!value || typeof value !== 'string' || !value.trim()) {
+      return fallbackSrc;
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.startsWith('data:')) {
+      return trimmed;
+    }
+
+    if (
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('/')
+    ) {
+      return trimmed;
+    }
+
+    return `/${trimmed}`;
+  };
+
+  const [imageSrc, setImageSrc] = useState(() => normalizeSrc(src));
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    setImageSrc(src);
+    setImageSrc(normalizeSrc(src));
     setHasError(false);
     setIsLoading(true);
   }, [src]);
 
-  const isExternalUrl = useMemo(
-    () => typeof imageSrc === 'string' && imageSrc.startsWith('http'),
+  const isExternalOrDataUrl = useMemo(
+    () =>
+      typeof imageSrc === 'string' && (imageSrc.startsWith('http') || imageSrc.startsWith('data:')),
     [imageSrc]
   );
-  const resolvedUnoptimized = unoptimized || isExternalUrl;
+  const resolvedUnoptimized = unoptimized || isExternalOrDataUrl;
 
   const handleError = useCallback(() => {
     if (!hasError && imageSrc !== fallbackSrc) {

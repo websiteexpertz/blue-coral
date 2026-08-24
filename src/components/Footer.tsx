@@ -1,5 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useMemo } from 'react';
 import Link from 'next/link';
+import { useSiteContent } from '@/app/components/site/useSiteContent';
 
 const footerLinks = [
   { label: 'About', href: '#about' },
@@ -11,7 +14,59 @@ const footerLinks = [
   { label: 'Privacy Policy', href: '#privacy' },
 ];
 
+const SOCIAL_ICONS: Record<string, React.ReactNode> = {
+  Instagram: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
+    </svg>
+  ),
+  Facebook: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  ),
+  Twitter: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2s9 5 20 5a9.5 9.5 0 0 0-9-5.5c4.75 2.25 7-7 7-7" />
+    </svg>
+  ),
+  Email: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  ),
+};
+
 export default function Footer() {
+  const { footer } = useSiteContent();
+
+  const socialLinks = useMemo(() => {
+    return footer.socialLinks.filter((link) => link.platform && link.url);
+  }, [footer.socialLinks]);
+
   return (
     <footer className="bg-foreground text-white pt-16 pb-10 px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
@@ -72,66 +127,20 @@ export default function Footer() {
             © {new Date()?.getFullYear()} Blue Coral Landing. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-accent transition-colors duration-300"
-              aria-label="Blue Coral Landing on Instagram"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+            {socialLinks.map((link) => (
+              <a
+                key={link.platform}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/40 hover:text-accent transition-colors duration-300"
+                aria-label={`Blue Coral Landing on ${link.platform}`}
               >
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
-              </svg>
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-accent transition-colors duration-300"
-              aria-label="Blue Coral Landing on Facebook"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-              </svg>
-            </a>
-            <a
-              href="mailto:info@bluecorallandingbahamas.com"
-              className="text-white/40 hover:text-accent transition-colors duration-300"
-              aria-label="Email Blue Coral Landing"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-            </a>
+                {SOCIAL_ICONS[link.platform] || (
+                  <span className="text-xs text-white/40">{link.platform}</span>
+                )}
+              </a>
+            ))}
           </div>
         </div>
       </div>

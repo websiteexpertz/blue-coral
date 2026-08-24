@@ -2,7 +2,16 @@ import { NextResponse } from 'next/server';
 import { getAvailabilityBookingsForMonth } from '@/lib/availability-store';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  let searchParams: URLSearchParams;
+  try {
+    searchParams = new URL(request.url).searchParams;
+  } catch (err) {
+    const host = request.headers.get('host') || 'localhost:4028';
+    const proto = request.headers.get('x-forwarded-proto') || 'http';
+    const base = `${proto}://${host}`;
+    const url = new URL((request as any).url || '/', base);
+    searchParams = url.searchParams;
+  }
   const year = Number(searchParams.get('year'));
   const month = Number(searchParams.get('month'));
 
