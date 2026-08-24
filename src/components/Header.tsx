@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useSiteMedia } from '@/app/components/media/useSiteMedia';
+import type { MediaDocument } from '@/lib/media-store';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -17,9 +18,9 @@ const navLinks = [
   { label: 'Contact', href: '#contact' },
 ];
 
-export default function Header() {
+export default function Header({ initialMedia = [] }: { initialMedia?: MediaDocument[] }) {
   const pathname = usePathname();
-  const { getItem } = useSiteMedia();
+  const { getItem } = useSiteMedia(initialMedia);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 

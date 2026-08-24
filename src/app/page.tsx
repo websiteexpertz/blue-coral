@@ -12,7 +12,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Header />
+      <Header initialMedia={initialMedia} />
       <PropertyExperience initialContent={siteContent} initialMedia={initialMedia} />
       <Footer />
     </>

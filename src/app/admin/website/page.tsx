@@ -273,7 +273,9 @@ export default function AdminWebsitePage() {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unable to save homepage image.' }));
+        const error = await response
+          .json()
+          .catch(() => ({ error: 'Unable to save homepage image.' }));
         throw new Error(error?.error || 'Unable to save homepage image.');
       }
 
@@ -857,7 +859,10 @@ export default function AdminWebsitePage() {
                 {[1, 2, 3, 4].map((position) => {
                   const item = homepageGallery.find((entry) => entry.position === position);
                   return (
-                    <div key={position} className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div
+                      key={position}
+                      className="rounded-2xl border border-slate-200 bg-white p-3"
+                    >
                       <div className="mb-3 flex items-center justify-between">
                         <p className="text-sm font-medium text-slate-700">Position {position}</p>
                         {item ? (

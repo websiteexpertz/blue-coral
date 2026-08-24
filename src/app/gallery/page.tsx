@@ -8,14 +8,14 @@ export const metadata = {
 };
 
 export default async function GalleryPage() {
-  const galleryItems = await getMediaDocuments();
-  const initialGallery = galleryItems.filter(
+  const initialMedia = await getMediaDocuments();
+  const initialGallery = initialMedia.filter(
     (item) => item.section === 'gallery' && item.type === 'full'
   );
 
   return (
     <>
-      <Header />
+      <Header initialMedia={initialMedia} />
       <main className="min-h-screen bg-background py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <header className="mb-12 rounded-[28px] border border-border bg-white/90 p-8 shadow-[0_32px_80px_rgba(27,79,107,0.08)] backdrop-blur-sm">

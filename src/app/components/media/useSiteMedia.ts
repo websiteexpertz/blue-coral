@@ -24,8 +24,6 @@ export function useSiteMedia(initialMedia: MediaDocument[] = []) {
 
     let isMounted = true;
 
-    clearSiteMediaCache();
-
     const loadMedia = async () => {
       setIsLoading(true);
       try {
@@ -49,7 +47,7 @@ export function useSiteMedia(initialMedia: MediaDocument[] = []) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialMedia]);
 
   return {
     media,
