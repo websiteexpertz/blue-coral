@@ -61,11 +61,12 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function Footer() {
-  const { footer } = useSiteContent();
+  const { content } = useSiteContent();
+  const footer = content.footer;
 
   const socialLinks = useMemo(() => {
-    return footer.socialLinks.filter((link) => link.platform && link.url);
-  }, [footer.socialLinks]);
+    return (footer?.socialLinks ?? []).filter((link) => link.platform && link.url);
+  }, [footer?.socialLinks]);
 
   return (
     <footer className="bg-foreground text-white pt-16 pb-10 px-6 lg:px-10">
