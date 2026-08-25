@@ -40,3 +40,34 @@ export async function getQueryCollection(): Promise<Collection<QueryDocument> | 
     return null;
   }
 }
+
+export async function getDb() {
+  if (!uri) {
+    throw new Error('MONGODB_URI not set');
+  }
+
+  try {
+    if (cachedDb) return cachedDb;
+
+    if (!cachedClient) {
+      cachedClient = new MongoClient(uri);
+      await cachedClient.connect();
+    }
+
+    cachedDb = cachedClient.db(dbName);
+    return cachedDb;
+  } catch (error) {
+    console.error('MongoDB unavailable', error);
+    throw error;
+  }
+}
+
+export async function getBookingsCollection() {
+  try {
+    const db = await getDb();
+    return db.collection('bookings');
+  } catch (error) {
+    console.error('Could not get bookings collection', error);
+    return null;
+  }
+}
