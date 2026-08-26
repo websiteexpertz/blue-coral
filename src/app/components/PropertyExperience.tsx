@@ -372,8 +372,10 @@ export default function PropertyExperience({
   const loadAvailability = useCallback(async () => {
     setIsLoadingAvailability(true);
     try {
+      const from = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const to = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
       const response = await fetch(
-        `/api/availability?year=${currentMonth.getFullYear()}&month=${currentMonth.getMonth()}`
+        `/api/booked-dates?from=${from.toISOString()}&to=${to.toISOString()}`
       );
 
       if (!response.ok) {
@@ -381,9 +383,15 @@ export default function PropertyExperience({
       }
 
       const payload = await response.json();
-      const nextBookedDates = new Set<string>(
-        (payload.bookings ?? []).map((booking: { date: string }) => booking.date)
-      );
+      const nextBookedDates = new Set<string>();
+      for (const booking of payload.bookedRanges ?? []) {
+        const start = new Date(`${booking.start.slice(0, 10)}T00:00:00`);
+        const end = new Date(`${booking.end.slice(0, 10)}T00:00:00`);
+
+        for (const date = new Date(start); date < end; date.setDate(date.getDate() + 1)) {
+          nextBookedDates.add(getDateKey(date));
+        }
+      }
       setBookedDates(nextBookedDates);
     } catch (error) {
       console.error('Unable to load availability', error);
