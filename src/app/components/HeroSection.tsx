@@ -111,7 +111,7 @@ export default function HeroSection() {
               className="label-caps text-white/70"
               style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.95rem)' }}
             >
-              Great Guana Cay · Bahamass
+              Great Guana Cay · Bahamas
             </span>
           </motion.div>
         </div>
