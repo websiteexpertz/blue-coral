@@ -117,6 +117,8 @@ export async function getAvailabilityBookingsForMonth(
       .find<BookingDocument>({
         $or: [
           { status: 'approved' },
+          { status: 'confirmed' },
+          { status: 'active' },
           { status: { $exists: false } },
           { status: '' },
         ],

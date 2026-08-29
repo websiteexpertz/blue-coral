@@ -1,14 +1,22 @@
 import { NextResponse } from 'next/server';
 import ical from 'node-ical';
+import { getBookings } from '@/lib/bookings-store';
+import { getIcalSettings } from '@/lib/ical-settings-store';
 
 export const runtime = 'nodejs';
 
-const AIRBNB_ICAL_URL =
-  process.env.AIRBNB_ICAL_URL ||
-  'https://www.airbnb.com/calendar/ical/35916488.ics?t=a2fdaaacfd5e415c9898b64b26f0077a';
-
 export async function GET(req: Request) {
   try {
+    const settings = await getIcalSettings();
+    if (!settings.url) {
+      return NextResponse.json([], {
+        headers: {
+          'Cache-Control': 's-maxage=60, stale-while-revalidate=60',
+          'X-iCal-Refresh-Minutes': String(settings.refreshMinutes),
+        },
+      });
+    }
+
     const url = new URL(req.url);
     const from = url.searchParams.get('from')
       ? new Date(url.searchParams.get('from') as string)
@@ -21,8 +29,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
     }
 
-    const feedResponse = await fetch(AIRBNB_ICAL_URL, {
-      next: { revalidate: 300 },
+    const feedResponse = await fetch(settings.url, {
+      next: { revalidate: settings.refreshMinutes * 60 },
     });
 
     if (!feedResponse.ok) {
@@ -46,7 +54,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const bookings = Object.values(webEvents)
+    const importedBookings = Object.values(webEvents)
       .filter(
         (event): event is ical.VEvent =>
           Boolean(event && event.type === 'VEVENT' && event.start && event.end)
@@ -61,22 +69,41 @@ export async function GET(req: Request) {
           : new Date(event.end!);
 
         return {
-        start,
-        end,
-        uid: event.uid || `${event.summary || 'Reserved'}-${event.start.toISOString()}`,
+          start,
+          end,
+          uid: event.uid || `${event.summary || 'Reserved'}-${event.start.toISOString()}`,
           allDay: Boolean(dateOnlyRange) || event.datetype === 'date',
         };
       })
-      .filter((event) => event.start < to && event.end > from)
-      .map((event) => ({
-        start: event.start.toISOString(),
-        end: event.end.toISOString(),
-        uid: event.uid,
-        allDay: event.allDay,
-      }));
+      .filter((event) => event.start < to && event.end > from);
+
+    const localBookings = (await getBookings())
+      .filter((booking) => ['approved', 'confirmed', 'active'].includes((booking.status || '').toLowerCase()))
+      .map((booking) => {
+        const start = new Date(`${booking.checkIn}T00:00:00.000Z`);
+        const end = new Date(`${booking.checkOut}T00:00:00.000Z`);
+
+        return {
+          start,
+          end,
+          uid: `local-booking-${booking.id}`,
+          allDay: true,
+        };
+      })
+      .filter((event) => event.start < to && event.end > from);
+
+    const bookings = [...importedBookings, ...localBookings].map((event) => ({
+      start: event.start.toISOString(),
+      end: event.end.toISOString(),
+      uid: event.uid,
+      allDay: event.allDay,
+    }));
 
     return NextResponse.json(bookings, {
-      headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=60' },
+      headers: {
+        'Cache-Control': `s-maxage=${settings.refreshMinutes * 60}, stale-while-revalidate=60`,
+        'X-iCal-Refresh-Minutes': String(settings.refreshMinutes),
+      },
     });
   } catch (err) {
     console.error('Error in /api/ics/bookings', err);
