@@ -821,8 +821,8 @@ export default function PropertyExperience({
       </section>
 
       <section id="rates" className="px-6 py-24 lg:px-10">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
-          <div className="h-full rounded-[2rem] border border-border bg-foreground p-8 text-white shadow-[0_25px_80px_rgba(27,79,107,0.15)] lg:p-10">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="rounded-[2rem] border border-border bg-foreground p-8 text-white shadow-[0_25px_80px_rgba(27,79,107,0.15)] lg:p-10">
             <p className="label-caps text-accent">{nearbyAttractionsSection.eyebrow}</p>
             <h2 className="section-headline mt-3 max-w-xl text-white">
               {nearbyAttractionsSection.title}
@@ -842,8 +842,8 @@ export default function PropertyExperience({
             </div>
           </div>
 
-          <div className="flex h-full min-w-0 flex-col gap-4 lg:min-h-[420px]">
-            <div className="flex min-h-[0] min-w-0 flex-col justify-start overflow-hidden rounded-[1.75rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,250,0.96))] p-5 shadow-[0_20px_70px_rgba(27,79,107,0.06)] sm:p-6 lg:h-[240px]">
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-[420px]">
+            <div className="flex min-h-[0] min-w-0 flex-col justify-start overflow-visible rounded-[1.75rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,250,0.96))] p-5 shadow-[0_20px_70px_rgba(27,79,107,0.06)] sm:p-6">
               <div className="flex items-center gap-3 text-primary">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <MapPin size={17} />
@@ -865,7 +865,7 @@ export default function PropertyExperience({
               </div>
             </div>
 
-            <div className="flex min-h-[0] min-w-0 flex-col justify-start overflow-hidden rounded-[1.75rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,250,0.96))] p-5 shadow-[0_20px_70px_rgba(27,79,107,0.06)] sm:p-6 lg:h-[280px]">
+            <div className="flex min-h-[0] min-w-0 flex-col justify-start overflow-visible rounded-[1.75rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,250,0.96))] p-5 shadow-[0_20px_70px_rgba(27,79,107,0.06)] sm:p-6">
               <div className="flex items-center gap-3 text-primary">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <UtensilsCrossed size={17} />

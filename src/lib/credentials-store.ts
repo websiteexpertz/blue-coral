@@ -3,6 +3,8 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+declare module 'bcryptjs';
+
 const CREDENTIALS_PATH = path.join(process.cwd(), 'data', 'crm-credentials.json');
 
 export interface Creds {
