@@ -24,6 +24,13 @@ export default function Header({ initialMedia = [] }: { initialMedia?: MediaDocu
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const resolveNavHref = (href: string) => {
+    if (pathname === '/gallery' && href.startsWith('#')) {
+      return `/${href}`;
+    }
+    return href;
+  };
+
   const handleScroll = useCallback(() => {
     setScrolled(window.scrollY > 60);
   }, []);
@@ -75,7 +82,7 @@ export default function Header({ initialMedia = [] }: { initialMedia?: MediaDocu
             {navLinks?.map((link) => (
               <Link
                 key={link?.href}
-                href={link?.href}
+                href={resolveNavHref(link?.href)}
                 className={`nav-link-luxury transition-colors duration-300 ${pathname === '/gallery' ? 'text-foreground hover:text-primary' : scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-white/70 hover:text-white'}`}
               >
                 {link?.label}
@@ -120,7 +127,7 @@ export default function Header({ initialMedia = [] }: { initialMedia?: MediaDocu
             {navLinks?.map((link, i) => (
               <Link
                 key={link?.href}
-                href={link?.href}
+                href={resolveNavHref(link?.href)}
                 onClick={handleNavClick}
                 className="py-4 border-b border-border text-2xl font-serif font-light text-foreground hover:text-primary transition-colors duration-200"
                 style={{ animationDelay: `${i * 50}ms` }}
