@@ -13,12 +13,37 @@ const storageFile = join(storageDir, 'website-content.json');
 const MONGO_URI = process.env.MONGODB_URI;
 let mongoClient: MongoClient | null = null;
 
+function isClosedTopologyError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const message = String((error as { message?: string }).message || '');
+  return (
+    (error as { name?: string }).name === 'MongoTopologyClosedError' ||
+    (error as { name?: string }).name === 'MongoNotConnectedError' ||
+    message.includes('Topology is closed') ||
+    message.includes('topology is closed') ||
+    message.includes('connection pool is closed')
+  );
+}
+
 async function getMongoClient() {
   if (!MONGO_URI) return null;
-  if (mongoClient) return mongoClient;
+
+  try {
+    if (mongoClient && mongoClient.topology && mongoClient.topology.isConnected()) {
+      return mongoClient;
+    }
+  } catch {
+    // ignore and reconnect below
+  }
+
   mongoClient = new MongoClient(MONGO_URI);
-  await mongoClient.connect();
-  return mongoClient;
+  try {
+    await mongoClient.connect();
+    return mongoClient;
+  } catch (error) {
+    mongoClient = null;
+    throw error;
+  }
 }
 
 function ensureStorage() {
@@ -49,29 +74,63 @@ function writeFileStorage(data: SiteContentData) {
 }
 
 async function readDbStorage(): Promise<SiteContentData> {
-  const client = await getMongoClient();
+  let client = await getMongoClient();
   if (!client) return readFileStorage();
-  const db = client.db();
-  const coll = db.collection('site_content');
-  const doc = await coll.findOne({ _id: 'site' });
-  if (doc && doc.content) {
-    return normalizeSiteContent(doc.content as Partial<SiteContentData>);
+
+  try {
+    const db = client.db();
+    const coll = db.collection('site_content');
+    const doc = await coll.findOne({ _id: 'site' });
+    if (doc && doc.content) {
+      return normalizeSiteContent(doc.content as Partial<SiteContentData>);
+    }
+    // seed
+    const seed = DEFAULT_SITE_CONTENT;
+    await coll.updateOne({ _id: 'site' }, { $set: { content: seed } }, { upsert: true });
+    return seed;
+  } catch (error) {
+    if (!isClosedTopologyError(error)) throw error;
+    mongoClient = null;
+    client = await getMongoClient();
+    if (!client) return readFileStorage();
+
+    const db = client.db();
+    const coll = db.collection('site_content');
+    const doc = await coll.findOne({ _id: 'site' });
+    if (doc && doc.content) {
+      return normalizeSiteContent(doc.content as Partial<SiteContentData>);
+    }
+
+    const seed = DEFAULT_SITE_CONTENT;
+    await coll.updateOne({ _id: 'site' }, { $set: { content: seed } }, { upsert: true });
+    return seed;
   }
-  // seed
-  const seed = DEFAULT_SITE_CONTENT;
-  await coll.updateOne({ _id: 'site' }, { $set: { content: seed } }, { upsert: true });
-  return seed;
 }
 
 async function writeDbStorage(data: SiteContentData) {
-  const client = await getMongoClient();
+  let client = await getMongoClient();
   if (!client) {
     writeFileStorage(data);
     return;
   }
-  const db = client.db();
-  const coll = db.collection('site_content');
-  await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
+
+  try {
+    const db = client.db();
+    const coll = db.collection('site_content');
+    await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
+  } catch (error) {
+    if (!isClosedTopologyError(error)) throw error;
+    mongoClient = null;
+    client = await getMongoClient();
+    if (!client) {
+      writeFileStorage(data);
+      return;
+    }
+
+    const db = client.db();
+    const coll = db.collection('site_content');
+    await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
+  }
 }
 
 export async function getSiteContentData(): Promise<SiteContentData> {

@@ -19,6 +19,9 @@ import AppImage from '@/components/ui/AppImage';
 const emptyHighlight = { title: '', description: '' };
 const emptyCard = { title: '', description: '', tag: '', key: '', src: '', alt: '' };
 
+// Set to false to show text fields, true to hide them
+const HIDE_TEXT_FIELDS = true;
+
 export default function AdminWebsitePage() {
   const [content, setContent] = useState<SiteContentData>(DEFAULT_SITE_CONTENT);
   const [saving, setSaving] = useState(false);
@@ -370,19 +373,10 @@ export default function AdminWebsitePage() {
   const SECTION_TABS = [
     { key: 'hero', label: 'Hero' },
     { key: 'about', label: 'About' },
-    { key: 'villaFeatures', label: 'Villa Features' },
     { key: 'gallery', label: 'Gallery' },
-    { key: 'amenities', label: 'Amenities' },
-    { key: 'rooms', label: 'Rooms' },
-    { key: 'nearbyAttractions', label: 'Nearby Attractions' },
     { key: 'thingsToDo', label: 'Things To Do' },
-    { key: 'houseRules', label: 'House Rules' },
-    { key: 'importantInformation', label: 'Important Info' },
     { key: 'neighborhood', label: 'Neighborhood' },
-    { key: 'faq', label: 'FAQ' },
-    { key: 'guestReviews', label: 'Guest Reviews' },
-    { key: 'contact', label: 'Contact' },
-    { key: 'footer', label: 'Footer' },
+    
   ] as const;
 
   const statsFields = useMemo(() => content.hero.stats, [content.hero.stats]);
@@ -433,48 +427,79 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Hero section</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.hero.eyebrow}
-                onChange={(event) => updateHero({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.hero.title}
-                onChange={(event) => updateHero({ title: event.target.value })}
-                className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Subtitle
-              <textarea
-                value={content.hero.subtitle}
-                onChange={(event) => updateHero({ subtitle: event.target.value })}
-                className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm text-slate-600">
-                Primary CTA
-                <input
-                  value={content.hero.ctaPrimary}
-                  onChange={(event) => updateHero({ ctaPrimary: event.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                />
-              </label>
-              <label className="block text-sm text-slate-600">
-                Secondary CTA
-                <input
-                  value={content.hero.ctaSecondary}
-                  onChange={(event) => updateHero({ ctaSecondary: event.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                />
-              </label>
-            </div>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.hero.eyebrow}
+                    onChange={(event) => updateHero({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.hero.title}
+                    onChange={(event) => updateHero({ title: event.target.value })}
+                    className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Subtitle
+                  <textarea
+                    value={content.hero.subtitle}
+                    onChange={(event) => updateHero({ subtitle: event.target.value })}
+                    className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-sm text-slate-600">
+                    Primary CTA
+                    <input
+                      value={content.hero.ctaPrimary}
+                      onChange={(event) => updateHero({ ctaPrimary: event.target.value })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                    />
+                  </label>
+                  <label className="block text-sm text-slate-600">
+                    Secondary CTA
+                    <input
+                      value={content.hero.ctaSecondary}
+                      onChange={(event) => updateHero({ ctaSecondary: event.target.value })}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                    />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Hero stats</p>
+                  {statsFields.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="grid gap-2 sm:grid-cols-2">
+                      <input
+                        value={item.value}
+                        onChange={(event) => {
+                          const nextStats = [...content.hero.stats];
+                          nextStats[index] = { ...nextStats[index], value: event.target.value };
+                          updateHero({ stats: nextStats });
+                        }}
+                        className="rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Value"
+                      />
+                      <input
+                        value={item.label}
+                        onChange={(event) => {
+                          const nextStats = [...content.hero.stats];
+                          nextStats[index] = { ...nextStats[index], label: event.target.value };
+                          updateHero({ stats: nextStats });
+                        }}
+                        className="rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Label"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
             <label className="block text-sm text-slate-600">
               Hero image key
               <div className="mt-1 flex items-center gap-3">
@@ -533,33 +558,6 @@ export default function AdminWebsitePage() {
                 ) : null}
               </div>
             </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Hero stats</p>
-              {statsFields.map((item, index) => (
-                <div key={`${item.label}-${index}`} className="grid gap-2 sm:grid-cols-2">
-                  <input
-                    value={item.value}
-                    onChange={(event) => {
-                      const nextStats = [...content.hero.stats];
-                      nextStats[index] = { ...nextStats[index], value: event.target.value };
-                      updateHero({ stats: nextStats });
-                    }}
-                    className="rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Value"
-                  />
-                  <input
-                    value={item.label}
-                    onChange={(event) => {
-                      const nextStats = [...content.hero.stats];
-                      nextStats[index] = { ...nextStats[index], label: event.target.value };
-                      updateHero({ stats: nextStats });
-                    }}
-                    className="rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Label"
-                  />
-                </div>
-              ))}
-            </div>
           </div>
         </section>
       )}
@@ -568,30 +566,34 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">About section</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.about.eyebrow}
-                onChange={(event) => updateAbout({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.about.title}
-                onChange={(event) => updateAbout({ title: event.target.value })}
-                className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Body text
-              <textarea
-                value={content.about.text}
-                onChange={(event) => updateAbout({ text: event.target.value })}
-                className="mt-1 min-h-[140px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.about.eyebrow}
+                    onChange={(event) => updateAbout({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.about.title}
+                    onChange={(event) => updateAbout({ title: event.target.value })}
+                    className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Body text
+                  <textarea
+                    value={content.about.text}
+                    onChange={(event) => updateAbout({ text: event.target.value })}
+                    className="mt-1 min-h-[140px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+              </>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm text-slate-600">
                 Image key 1
@@ -718,42 +720,44 @@ export default function AdminWebsitePage() {
                 </div>
               </label>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">About highlights</p>
-              {content.about.highlights.map((item, index) => (
-                <div
-                  key={`${item.title}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
-                  <input
-                    value={item.title}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.about.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        title: event.target.value,
-                      };
-                      updateAbout({ highlights: nextHighlights });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Title"
-                  />
-                  <textarea
-                    value={item.description}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.about.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        description: event.target.value,
-                      };
-                      updateAbout({ highlights: nextHighlights });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Description"
-                  />
-                </div>
-              ))}
-            </div>
+            {!HIDE_TEXT_FIELDS && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">About highlights</p>
+                {content.about.highlights.map((item, index) => (
+                  <div
+                    key={`${item.title}-${index}`}
+                    className="rounded-2xl border border-slate-200 p-3"
+                  >
+                    <input
+                      value={item.title}
+                      onChange={(event) => {
+                        const nextHighlights = [...content.about.highlights];
+                        nextHighlights[index] = {
+                          ...nextHighlights[index],
+                          title: event.target.value,
+                        };
+                        updateAbout({ highlights: nextHighlights });
+                      }}
+                      className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Title"
+                    />
+                    <textarea
+                      value={item.description}
+                      onChange={(event) => {
+                        const nextHighlights = [...content.about.highlights];
+                        nextHighlights[index] = {
+                          ...nextHighlights[index],
+                          description: event.target.value,
+                        };
+                        updateAbout({ highlights: nextHighlights });
+                      }}
+                      className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Description"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -762,81 +766,85 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Villa Features</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.villaFeatures.eyebrow}
-                onChange={(event) => updateVillaFeatures({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.villaFeatures.title}
-                onChange={(event) => updateVillaFeatures({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Description
-              <textarea
-                value={content.villaFeatures.description}
-                onChange={(event) => updateVillaFeatures({ description: event.target.value })}
-                className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Feature cards</p>
-              {content.villaFeatures.highlights.map((item, index) => (
-                <div
-                  key={`${item.title}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
                   <input
-                    value={item.title}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.villaFeatures.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        title: event.target.value,
-                      };
-                      updateVillaFeatures({ highlights: nextHighlights });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Title"
+                    value={content.villaFeatures.eyebrow}
+                    onChange={(event) => updateVillaFeatures({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
                   <textarea
-                    value={item.description}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.villaFeatures.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        description: event.target.value,
-                      };
-                      updateVillaFeatures({ highlights: nextHighlights });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Description"
+                    value={content.villaFeatures.title}
+                    onChange={(event) => updateVillaFeatures({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Description
+                  <textarea
+                    value={content.villaFeatures.description}
+                    onChange={(event) => updateVillaFeatures({ description: event.target.value })}
+                    className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Feature cards</p>
+                  {content.villaFeatures.highlights.map((item, index) => (
+                    <div
+                      key={`${item.title}-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <input
+                        value={item.title}
+                        onChange={(event) => {
+                          const nextHighlights = [...content.villaFeatures.highlights];
+                          nextHighlights[index] = {
+                            ...nextHighlights[index],
+                            title: event.target.value,
+                          };
+                          updateVillaFeatures({ highlights: nextHighlights });
+                        }}
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Title"
+                      />
+                      <textarea
+                        value={item.description}
+                        onChange={(event) => {
+                          const nextHighlights = [...content.villaFeatures.highlights];
+                          nextHighlights[index] = {
+                            ...nextHighlights[index],
+                            description: event.target.value,
+                          };
+                          updateVillaFeatures({ highlights: nextHighlights });
+                        }}
+                        className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Description"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Footer amenities</p>
-              {content.villaFeatures.footerItems.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextItems = [...content.villaFeatures.footerItems];
-                    nextItems[index] = event.target.value;
-                    updateVillaFeatures({ footerItems: nextItems });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                />
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Footer amenities</p>
+                  {content.villaFeatures.footerItems.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextItems = [...content.villaFeatures.footerItems];
+                        nextItems[index] = event.target.value;
+                        updateVillaFeatures({ footerItems: nextItems });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -963,106 +971,113 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Amenities</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.amenities.eyebrow}
-                onChange={(event) => updateAmenities({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.amenities.title}
-                onChange={(event) => updateAmenities({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.amenities.text}
-                onChange={(event) => updateAmenities({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Highlights</p>
-              {content.amenities.highlights.map((item, index) => (
-                <div
-                  key={`${item.title}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
                   <input
-                    value={item.title}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.amenities.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        title: event.target.value,
-                      };
-                      updateAmenities({ highlights: nextHighlights });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Title"
+                    value={content.amenities.eyebrow}
+                    onChange={(event) => updateAmenities({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
                   <textarea
-                    value={item.body}
-                    onChange={(event) => {
-                      const nextHighlights = [...content.amenities.highlights];
-                      nextHighlights[index] = {
-                        ...nextHighlights[index],
-                        body: event.target.value,
-                      };
-                      updateAmenities({ highlights: nextHighlights });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Body"
+                    value={content.amenities.title}
+                    onChange={(event) => updateAmenities({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4">
-              <p className="text-sm font-medium text-slate-700">Amenity categories</p>
-              {content.amenities.categories.map((category, index) => (
-                <div
-                  key={`${category.title}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
-                  <input
-                    value={category.title}
-                    onChange={(event) => {
-                      const nextCategories = [...content.amenities.categories];
-                      nextCategories[index] = {
-                        ...nextCategories[index],
-                        title: event.target.value,
-                      };
-                      updateAmenities({ categories: nextCategories });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Category title"
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.amenities.text}
+                    onChange={(event) => updateAmenities({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
-                  <div className="space-y-2">
-                    {category.items.map((item, itemIndex) => (
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Highlights</p>
+                  {content.amenities.highlights.map((item, index) => (
+                    <div
+                      key={`${item.title}-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
                       <input
-                        key={`${item}-${itemIndex}`}
-                        value={item}
+                        value={item.title}
+                        onChange={(event) => {
+                          const nextHighlights = [...content.amenities.highlights];
+                          nextHighlights[index] = {
+                            ...nextHighlights[index],
+                            title: event.target.value,
+                          };
+                          updateAmenities({ highlights: nextHighlights });
+                        }}
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Title"
+                      />
+                      <textarea
+                        value={item.body}
+                        onChange={(event) => {
+                          const nextHighlights = [...content.amenities.highlights];
+                          nextHighlights[index] = {
+                            ...nextHighlights[index],
+                            body: event.target.value,
+                          };
+                          updateAmenities({ highlights: nextHighlights });
+                        }}
+                        className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Body"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-4">
+                  <p className="text-sm font-medium text-slate-700">Amenity categories</p>
+                  {content.amenities.categories.map((category, index) => (
+                    <div
+                      key={`${category.title}-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <input
+                        value={category.title}
                         onChange={(event) => {
                           const nextCategories = [...content.amenities.categories];
-                          const nextItems = [...nextCategories[index].items];
-                          nextItems[itemIndex] = event.target.value;
-                          nextCategories[index] = { ...nextCategories[index], items: nextItems };
+                          nextCategories[index] = {
+                            ...nextCategories[index],
+                            title: event.target.value,
+                          };
                           updateAmenities({ categories: nextCategories });
                         }}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                        placeholder="Amenity item"
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Category title"
                       />
-                    ))}
-                  </div>
+                      <div className="space-y-2">
+                        {category.items.map((item, itemIndex) => (
+                          <input
+                            key={`${item}-${itemIndex}`}
+                            value={item}
+                            onChange={(event) => {
+                              const nextCategories = [...content.amenities.categories];
+                              const nextItems = [...nextCategories[index].items];
+                              nextItems[itemIndex] = event.target.value;
+                              nextCategories[index] = {
+                                ...nextCategories[index],
+                                items: nextItems,
+                              };
+                              updateAmenities({ categories: nextCategories });
+                            }}
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                            placeholder="Amenity item"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1071,92 +1086,102 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Rooms & Spaces</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.rooms.eyebrow}
-                onChange={(event) => updateRooms({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.rooms.title}
-                onChange={(event) => updateRooms({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.rooms.text}
-                onChange={(event) => updateRooms({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Bedrooms</p>
-              {content.rooms.bedrooms.map((bedroom, index) => (
-                <div
-                  key={`${bedroom.title}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
                   <input
-                    value={bedroom.title}
-                    onChange={(event) => {
-                      const nextBedrooms = [...content.rooms.bedrooms];
-                      nextBedrooms[index] = { ...nextBedrooms[index], title: event.target.value };
-                      updateRooms({ bedrooms: nextBedrooms });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Bedroom title"
+                    value={content.rooms.eyebrow}
+                    onChange={(event) => updateRooms({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
                   <textarea
-                    value={bedroom.details}
-                    onChange={(event) => {
-                      const nextBedrooms = [...content.rooms.bedrooms];
-                      nextBedrooms[index] = { ...nextBedrooms[index], details: event.target.value };
-                      updateRooms({ bedrooms: nextBedrooms });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Bedroom details"
+                    value={content.rooms.title}
+                    onChange={(event) => updateRooms({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.rooms.text}
+                    onChange={(event) => updateRooms({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Bedrooms</p>
+                  {content.rooms.bedrooms.map((bedroom, index) => (
+                    <div
+                      key={`${bedroom.title}-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <input
+                        value={bedroom.title}
+                        onChange={(event) => {
+                          const nextBedrooms = [...content.rooms.bedrooms];
+                          nextBedrooms[index] = {
+                            ...nextBedrooms[index],
+                            title: event.target.value,
+                          };
+                          updateRooms({ bedrooms: nextBedrooms });
+                        }}
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Bedroom title"
+                      />
+                      <textarea
+                        value={bedroom.details}
+                        onChange={(event) => {
+                          const nextBedrooms = [...content.rooms.bedrooms];
+                          nextBedrooms[index] = {
+                            ...nextBedrooms[index],
+                            details: event.target.value,
+                          };
+                          updateRooms({ bedrooms: nextBedrooms });
+                        }}
+                        className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Bedroom details"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Bathrooms</p>
-              {content.rooms.bathrooms.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextBathrooms = [...content.rooms.bathrooms];
-                    nextBathrooms[index] = event.target.value;
-                    updateRooms({ bathrooms: nextBathrooms });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Bathroom details"
-                />
-              ))}
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Spaces</p>
-              {content.rooms.spaces.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextSpaces = [...content.rooms.spaces];
-                    nextSpaces[index] = event.target.value;
-                    updateRooms({ spaces: nextSpaces });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Space description"
-                />
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Bathrooms</p>
+                  {content.rooms.bathrooms.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextBathrooms = [...content.rooms.bathrooms];
+                        nextBathrooms[index] = event.target.value;
+                        updateRooms({ bathrooms: nextBathrooms });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Bathroom details"
+                    />
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Spaces</p>
+                  {content.rooms.spaces.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextSpaces = [...content.rooms.spaces];
+                        nextSpaces[index] = event.target.value;
+                        updateRooms({ spaces: nextSpaces });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Space description"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1165,98 +1190,102 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Nearby Attractions</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.nearbyAttractions.eyebrow}
-                onChange={(event) => updateNearbyAttractions({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.nearbyAttractions.title}
-                onChange={(event) => updateNearbyAttractions({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.nearbyAttractions.text}
-                onChange={(event) => updateNearbyAttractions({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Pills</p>
-              {content.nearbyAttractions.pills.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextPills = [...content.nearbyAttractions.pills];
-                    nextPills[index] = event.target.value;
-                    updateNearbyAttractions({ pills: nextPills });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Pill text"
-                />
-              ))}
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Attractions</p>
-              {content.nearbyAttractions.attractions.map((item, index) => (
-                <div
-                  key={`${item.name}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
                   <input
-                    value={item.name}
-                    onChange={(event) => {
-                      const nextAttractions = [...content.nearbyAttractions.attractions];
-                      nextAttractions[index] = {
-                        ...nextAttractions[index],
-                        name: event.target.value,
-                      };
-                      updateNearbyAttractions({ attractions: nextAttractions });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Attraction name"
+                    value={content.nearbyAttractions.eyebrow}
+                    onChange={(event) => updateNearbyAttractions({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
                   <textarea
-                    value={item.description}
-                    onChange={(event) => {
-                      const nextAttractions = [...content.nearbyAttractions.attractions];
-                      nextAttractions[index] = {
-                        ...nextAttractions[index],
-                        description: event.target.value,
-                      };
-                      updateNearbyAttractions({ attractions: nextAttractions });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Description"
+                    value={content.nearbyAttractions.title}
+                    onChange={(event) => updateNearbyAttractions({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.nearbyAttractions.text}
+                    onChange={(event) => updateNearbyAttractions({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Pills</p>
+                  {content.nearbyAttractions.pills.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextPills = [...content.nearbyAttractions.pills];
+                        nextPills[index] = event.target.value;
+                        updateNearbyAttractions({ pills: nextPills });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Pill text"
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Restaurants</p>
-              {content.nearbyAttractions.restaurants.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextRestaurants = [...content.nearbyAttractions.restaurants];
-                    nextRestaurants[index] = event.target.value;
-                    updateNearbyAttractions({ restaurants: nextRestaurants });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Restaurant name and distance"
-                />
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Attractions</p>
+                  {content.nearbyAttractions.attractions.map((item, index) => (
+                    <div
+                      key={`${item.name}-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <input
+                        value={item.name}
+                        onChange={(event) => {
+                          const nextAttractions = [...content.nearbyAttractions.attractions];
+                          nextAttractions[index] = {
+                            ...nextAttractions[index],
+                            name: event.target.value,
+                          };
+                          updateNearbyAttractions({ attractions: nextAttractions });
+                        }}
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Attraction name"
+                      />
+                      <textarea
+                        value={item.description}
+                        onChange={(event) => {
+                          const nextAttractions = [...content.nearbyAttractions.attractions];
+                          nextAttractions[index] = {
+                            ...nextAttractions[index],
+                            description: event.target.value,
+                          };
+                          updateNearbyAttractions({ attractions: nextAttractions });
+                        }}
+                        className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Description"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Restaurants</p>
+                  {content.nearbyAttractions.restaurants.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextRestaurants = [...content.nearbyAttractions.restaurants];
+                        nextRestaurants[index] = event.target.value;
+                        updateNearbyAttractions({ restaurants: nextRestaurants });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Restaurant name and distance"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1265,46 +1294,50 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Things To Do</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.thingsToDo.eyebrow}
-                onChange={(event) => updateThingsToDo({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.thingsToDo.title}
-                onChange={(event) => updateThingsToDo({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.thingsToDo.text}
-                onChange={(event) => updateThingsToDo({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Activities</p>
-              {content.thingsToDo.activities.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextActivities = [...content.thingsToDo.activities];
-                    nextActivities[index] = event.target.value;
-                    updateThingsToDo({ activities: nextActivities });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Activity"
-                />
-              ))}
-            </div>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.thingsToDo.eyebrow}
+                    onChange={(event) => updateThingsToDo({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.thingsToDo.title}
+                    onChange={(event) => updateThingsToDo({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.thingsToDo.text}
+                    onChange={(event) => updateThingsToDo({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Activities</p>
+                  {content.thingsToDo.activities.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextActivities = [...content.thingsToDo.activities];
+                        nextActivities[index] = event.target.value;
+                        updateThingsToDo({ activities: nextActivities });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Activity"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
             <label className="block text-sm text-slate-600">
               Image key
               <div className="mt-1 flex items-center gap-3">
@@ -1375,49 +1408,53 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">House Rules</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.houseRules.eyebrow}
-                onChange={(event) => updateHouseRules({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.houseRules.title}
-                onChange={(event) => updateHouseRules({ title: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Rules</p>
-              {content.houseRules.rules.map((rule, index) => (
-                <div key={`${rule.label}-${index}`} className="grid gap-2 sm:grid-cols-2">
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
                   <input
-                    value={rule.label}
-                    onChange={(event) => {
-                      const nextRules = [...content.houseRules.rules];
-                      nextRules[index] = { ...nextRules[index], label: event.target.value };
-                      updateHouseRules({ rules: nextRules });
-                    }}
-                    className="rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Label"
+                    value={content.houseRules.eyebrow}
+                    onChange={(event) => updateHouseRules({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
-                  <input
-                    value={rule.value}
-                    onChange={(event) => {
-                      const nextRules = [...content.houseRules.rules];
-                      nextRules[index] = { ...nextRules[index], value: event.target.value };
-                      updateHouseRules({ rules: nextRules });
-                    }}
-                    className="rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Value"
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.houseRules.title}
+                    onChange={(event) => updateHouseRules({ title: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
                   />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Rules</p>
+                  {content.houseRules.rules.map((rule, index) => (
+                    <div key={`${rule.label}-${index}`} className="grid gap-2 sm:grid-cols-2">
+                      <input
+                        value={rule.label}
+                        onChange={(event) => {
+                          const nextRules = [...content.houseRules.rules];
+                          nextRules[index] = { ...nextRules[index], label: event.target.value };
+                          updateHouseRules({ rules: nextRules });
+                        }}
+                        className="rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Label"
+                      />
+                      <input
+                        value={rule.value}
+                        onChange={(event) => {
+                          const nextRules = [...content.houseRules.rules];
+                          nextRules[index] = { ...nextRules[index], value: event.target.value };
+                          updateHouseRules({ rules: nextRules });
+                        }}
+                        className="rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Value"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1426,38 +1463,44 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Important information</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.importantInformation.eyebrow}
-                onChange={(event) => updateImportantInformation({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.importantInformation.title}
-                onChange={(event) => updateImportantInformation({ title: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Notes</p>
-              {content.importantInformation.notes.map((note, index) => (
-                <input
-                  key={`${note}-${index}`}
-                  value={note}
-                  onChange={(event) => {
-                    const nextNotes = [...content.importantInformation.notes];
-                    nextNotes[index] = event.target.value;
-                    updateImportantInformation({ notes: nextNotes });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Important note"
-                />
-              ))}
-            </div>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.importantInformation.eyebrow}
+                    onChange={(event) =>
+                      updateImportantInformation({ eyebrow: event.target.value })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.importantInformation.title}
+                    onChange={(event) => updateImportantInformation({ title: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Notes</p>
+                  {content.importantInformation.notes.map((note, index) => (
+                    <input
+                      key={`${note}-${index}`}
+                      value={note}
+                      onChange={(event) => {
+                        const nextNotes = [...content.importantInformation.notes];
+                        nextNotes[index] = event.target.value;
+                        updateImportantInformation({ notes: nextNotes });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Important note"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1466,46 +1509,50 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">About the neighborhood</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.neighborhood.eyebrow}
-                onChange={(event) => updateNeighborhood({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.neighborhood.title}
-                onChange={(event) => updateNeighborhood({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.neighborhood.text}
-                onChange={(event) => updateNeighborhood({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Highlights</p>
-              {content.neighborhood.highlights.map((item, index) => (
-                <input
-                  key={`${item}-${index}`}
-                  value={item}
-                  onChange={(event) => {
-                    const nextHighlights = [...content.neighborhood.highlights];
-                    nextHighlights[index] = event.target.value;
-                    updateNeighborhood({ highlights: nextHighlights });
-                  }}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                  placeholder="Neighborhood highlight"
-                />
-              ))}
-            </div>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.neighborhood.eyebrow}
+                    onChange={(event) => updateNeighborhood({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.neighborhood.title}
+                    onChange={(event) => updateNeighborhood({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.neighborhood.text}
+                    onChange={(event) => updateNeighborhood({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">Highlights</p>
+                  {content.neighborhood.highlights.map((item, index) => (
+                    <input
+                      key={`${item}-${index}`}
+                      value={item}
+                      onChange={(event) => {
+                        const nextHighlights = [...content.neighborhood.highlights];
+                        nextHighlights[index] = event.target.value;
+                        updateNeighborhood({ highlights: nextHighlights });
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      placeholder="Neighborhood highlight"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
             <label className="block text-sm text-slate-600">
               Map link
               <input
@@ -1522,84 +1569,91 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">FAQ</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.faq.eyebrow}
-                onChange={(event) => updateFaq({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.faq.title}
-                onChange={(event) => updateFaq({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Intro text
-              <textarea
-                value={content.faq.text}
-                onChange={(event) => updateFaq({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-700">FAQ items</p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateFaq({
-                      items: [...content.faq.items, { question: '', answer: '' }],
-                    })
-                  }
-                  className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
-                >
-                  Add FAQ item
-                </button>
-              </div>
-              {content.faq.items.map((item, index) => (
-                <div key={`faq-item-${index}`} className="rounded-2xl border border-slate-200 p-3">
-                  <div className="mb-2 flex items-center justify-end">
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.faq.eyebrow}
+                    onChange={(event) => updateFaq({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.faq.title}
+                    onChange={(event) => updateFaq({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Intro text
+                  <textarea
+                    value={content.faq.text}
+                    onChange={(event) => updateFaq({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700">FAQ items</p>
                     <button
                       type="button"
-                      onClick={() => {
-                        const nextItems = content.faq.items.filter(
-                          (_, faqIndex) => faqIndex !== index
-                        );
-                        updateFaq({ items: nextItems });
-                      }}
-                      className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
+                      onClick={() =>
+                        updateFaq({
+                          items: [...content.faq.items, { question: '', answer: '' }],
+                        })
+                      }
+                      className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
                     >
-                      Delete FAQ
+                      Add FAQ item
                     </button>
                   </div>
-                  <input
-                    value={item.question}
-                    onChange={(event) => {
-                      const nextItems = [...content.faq.items];
-                      nextItems[index] = { ...nextItems[index], question: event.target.value };
-                      updateFaq({ items: nextItems });
-                    }}
-                    className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Question"
-                  />
-                  <textarea
-                    value={item.answer}
-                    onChange={(event) => {
-                      const nextItems = [...content.faq.items];
-                      nextItems[index] = { ...nextItems[index], answer: event.target.value };
-                      updateFaq({ items: nextItems });
-                    }}
-                    className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Answer"
-                  />
+                  {content.faq.items.map((item, index) => (
+                    <div
+                      key={`faq-item-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <div className="mb-2 flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextItems = content.faq.items.filter(
+                              (_, faqIndex) => faqIndex !== index
+                            );
+                            updateFaq({ items: nextItems });
+                          }}
+                          className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
+                        >
+                          Delete FAQ
+                        </button>
+                      </div>
+                      <input
+                        value={item.question}
+                        onChange={(event) => {
+                          const nextItems = [...content.faq.items];
+                          nextItems[index] = { ...nextItems[index], question: event.target.value };
+                          updateFaq({ items: nextItems });
+                        }}
+                        className="mb-2 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Question"
+                      />
+                      <textarea
+                        value={item.answer}
+                        onChange={(event) => {
+                          const nextItems = [...content.faq.items];
+                          nextItems[index] = { ...nextItems[index], answer: event.target.value };
+                          updateFaq({ items: nextItems });
+                        }}
+                        className="min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Answer"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1608,87 +1662,94 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Guest Reviews</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.guestReviews.eyebrow}
-                onChange={(event) => updateGuestReviews({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.guestReviews.title}
-                onChange={(event) => updateGuestReviews({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.guestReviews.text}
-                onChange={(event) => updateGuestReviews({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-700">Reviews</p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateGuestReviews({
-                      reviews: [...content.guestReviews.reviews, { quote: '', author: '' }],
-                    })
-                  }
-                  className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
-                >
-                  Add review
-                </button>
-              </div>
-              {content.guestReviews.reviews.map((review, index) => (
-                <div
-                  key={`guest-review-${index}`}
-                  className="rounded-2xl border border-slate-200 p-3"
-                >
-                  <div className="mb-2 flex items-center justify-end">
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.guestReviews.eyebrow}
+                    onChange={(event) => updateGuestReviews({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.guestReviews.title}
+                    onChange={(event) => updateGuestReviews({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.guestReviews.text}
+                    onChange={(event) => updateGuestReviews({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700">Reviews</p>
                     <button
                       type="button"
-                      onClick={() => {
-                        const nextReviews = content.guestReviews.reviews.filter(
-                          (_, reviewIndex) => reviewIndex !== index
-                        );
-                        updateGuestReviews({ reviews: nextReviews });
-                      }}
-                      className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
+                      onClick={() =>
+                        updateGuestReviews({
+                          reviews: [...content.guestReviews.reviews, { quote: '', author: '' }],
+                        })
+                      }
+                      className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
                     >
-                      Delete review
+                      Add review
                     </button>
                   </div>
-                  <textarea
-                    value={review.quote}
-                    onChange={(event) => {
-                      const nextReviews = [...content.guestReviews.reviews];
-                      nextReviews[index] = { ...nextReviews[index], quote: event.target.value };
-                      updateGuestReviews({ reviews: nextReviews });
-                    }}
-                    className="mb-2 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Quote"
-                  />
-                  <input
-                    value={review.author}
-                    onChange={(event) => {
-                      const nextReviews = [...content.guestReviews.reviews];
-                      nextReviews[index] = { ...nextReviews[index], author: event.target.value };
-                      updateGuestReviews({ reviews: nextReviews });
-                    }}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                    placeholder="Author"
-                  />
+                  {content.guestReviews.reviews.map((review, index) => (
+                    <div
+                      key={`guest-review-${index}`}
+                      className="rounded-2xl border border-slate-200 p-3"
+                    >
+                      <div className="mb-2 flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextReviews = content.guestReviews.reviews.filter(
+                              (_, reviewIndex) => reviewIndex !== index
+                            );
+                            updateGuestReviews({ reviews: nextReviews });
+                          }}
+                          className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
+                        >
+                          Delete review
+                        </button>
+                      </div>
+                      <textarea
+                        value={review.quote}
+                        onChange={(event) => {
+                          const nextReviews = [...content.guestReviews.reviews];
+                          nextReviews[index] = { ...nextReviews[index], quote: event.target.value };
+                          updateGuestReviews({ reviews: nextReviews });
+                        }}
+                        className="mb-2 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Quote"
+                      />
+                      <input
+                        value={review.author}
+                        onChange={(event) => {
+                          const nextReviews = [...content.guestReviews.reviews];
+                          nextReviews[index] = {
+                            ...nextReviews[index],
+                            author: event.target.value,
+                          };
+                          updateGuestReviews({ reviews: nextReviews });
+                        }}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="Author"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1697,54 +1758,58 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Contact section</h2>
           <div className="mt-5 space-y-4">
-            <label className="block text-sm text-slate-600">
-              Eyebrow
-              <input
-                value={content.contact.eyebrow}
-                onChange={(event) => updateContact({ eyebrow: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Title
-              <textarea
-                value={content.contact.title}
-                onChange={(event) => updateContact({ title: event.target.value })}
-                className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Text
-              <textarea
-                value={content.contact.text}
-                onChange={(event) => updateContact({ text: event.target.value })}
-                className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Email
-              <input
-                value={content.contact.email}
-                onChange={(event) => updateContact({ email: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Phone
-              <input
-                value={content.contact.phone}
-                onChange={(event) => updateContact({ phone: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm text-slate-600">
-              Note
-              <textarea
-                value={content.contact.note}
-                onChange={(event) => updateContact({ note: event.target.value })}
-                className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+            {!HIDE_TEXT_FIELDS && (
+              <>
+                <label className="block text-sm text-slate-600">
+                  Eyebrow
+                  <input
+                    value={content.contact.eyebrow}
+                    onChange={(event) => updateContact({ eyebrow: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Title
+                  <textarea
+                    value={content.contact.title}
+                    onChange={(event) => updateContact({ title: event.target.value })}
+                    className="mt-1 min-h-[80px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Text
+                  <textarea
+                    value={content.contact.text}
+                    onChange={(event) => updateContact({ text: event.target.value })}
+                    className="mt-1 min-h-[110px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Email
+                  <input
+                    value={content.contact.email}
+                    onChange={(event) => updateContact({ email: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Phone
+                  <input
+                    value={content.contact.phone}
+                    onChange={(event) => updateContact({ phone: event.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+                <label className="block text-sm text-slate-600">
+                  Note
+                  <textarea
+                    value={content.contact.note}
+                    onChange={(event) => updateContact({ note: event.target.value })}
+                    className="mt-1 min-h-[90px] w-full rounded-xl border border-slate-200 px-3 py-2"
+                  />
+                </label>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -1753,68 +1818,70 @@ export default function AdminWebsitePage() {
         <section className="rounded-[2rem] border border-white/10 bg-white/95 p-6 text-slate-900 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
           <h2 className="text-lg font-semibold text-slate-900">Footer</h2>
           <div className="mt-5 space-y-4">
-            <div className="space-y-4">
-              <p className="text-sm font-medium text-slate-700">Social Links</p>
-              {content.footer.socialLinks.map((link, index) => (
-                <div
-                  key={`${link.platform}-${index}`}
-                  className="rounded-2xl border border-slate-200 p-4 space-y-3"
-                >
-                  <label className="block text-sm text-slate-600">
-                    Platform
-                    <input
-                      value={link.platform}
-                      onChange={(event) => {
-                        const nextLinks = [...content.footer.socialLinks];
-                        nextLinks[index] = {
-                          ...nextLinks[index],
-                          platform: event.target.value,
-                        };
-                        updateFooter({ socialLinks: nextLinks });
-                      }}
-                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                      placeholder="e.g., Instagram, Facebook, Twitter"
-                    />
-                  </label>
-                  <label className="block text-sm text-slate-600">
-                    URL
-                    <input
-                      value={link.url}
-                      onChange={(event) => {
-                        const nextLinks = [...content.footer.socialLinks];
-                        nextLinks[index] = {
-                          ...nextLinks[index],
-                          url: event.target.value,
-                        };
-                        updateFooter({ socialLinks: nextLinks });
-                      }}
-                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                      placeholder="https://..."
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const nextLinks = content.footer.socialLinks.filter((_, i) => i !== index);
-                      updateFooter({ socialLinks: nextLinks });
-                    }}
-                    className="text-sm text-red-600 hover:text-red-700 transition-colors"
+            {!HIDE_TEXT_FIELDS && (
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-slate-700">Social Links</p>
+                {content.footer.socialLinks.map((link, index) => (
+                  <div
+                    key={`${link.platform}-${index}`}
+                    className="rounded-2xl border border-slate-200 p-4 space-y-3"
                   >
-                    Remove link
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  const nextLinks = [...content.footer.socialLinks, { platform: '', url: '' }];
-                  updateFooter({ socialLinks: nextLinks });
-                }}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
-              >
-                + Add social link
-              </button>
-            </div>
+                    <label className="block text-sm text-slate-600">
+                      Platform
+                      <input
+                        value={link.platform}
+                        onChange={(event) => {
+                          const nextLinks = [...content.footer.socialLinks];
+                          nextLinks[index] = {
+                            ...nextLinks[index],
+                            platform: event.target.value,
+                          };
+                          updateFooter({ socialLinks: nextLinks });
+                        }}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="e.g., Instagram, Facebook, Twitter"
+                      />
+                    </label>
+                    <label className="block text-sm text-slate-600">
+                      URL
+                      <input
+                        value={link.url}
+                        onChange={(event) => {
+                          const nextLinks = [...content.footer.socialLinks];
+                          nextLinks[index] = {
+                            ...nextLinks[index],
+                            url: event.target.value,
+                          };
+                          updateFooter({ socialLinks: nextLinks });
+                        }}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        placeholder="https://..."
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextLinks = content.footer.socialLinks.filter((_, i) => i !== index);
+                        updateFooter({ socialLinks: nextLinks });
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 transition-colors"
+                    >
+                      Remove link
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextLinks = [...content.footer.socialLinks, { platform: '', url: '' }];
+                    updateFooter({ socialLinks: nextLinks });
+                  }}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                >
+                  + Add social link
+                </button>
+              </div>
+            )}
           </div>
         </section>
       )}

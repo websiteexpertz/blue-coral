@@ -18,17 +18,29 @@ export interface QueryDocument {
   createdAt: string;
 }
 
+function isClosedTopologyError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const message = String((error as { message?: string }).message || '');
+  return (
+    (error as { name?: string }).name === 'MongoTopologyClosedError' ||
+    (error as { name?: string }).name === 'MongoNotConnectedError' ||
+    message.includes('Topology is closed') ||
+    message.includes('topology is closed') ||
+    message.includes('connection pool is closed')
+  );
+}
+
 export async function getQueryCollection(): Promise<Collection<QueryDocument> | null> {
   if (!uri) {
     return null;
   }
 
   try {
-    if (cachedDb) {
+    if (cachedDb && cachedClient && cachedClient.topology.isConnected()) {
       return cachedDb.collection<QueryDocument>('queries');
     }
 
-    if (!cachedClient) {
+    if (!cachedClient || !cachedClient.topology.isConnected()) {
       cachedClient = new MongoClient(uri);
       await cachedClient.connect();
     }
@@ -36,6 +48,20 @@ export async function getQueryCollection(): Promise<Collection<QueryDocument> | 
     cachedDb = cachedClient.db(dbName);
     return cachedDb.collection<QueryDocument>('queries');
   } catch (error) {
+    if (isClosedTopologyError(error)) {
+      cachedClient = null;
+      cachedDb = null;
+      try {
+        cachedClient = new MongoClient(uri);
+        await cachedClient.connect();
+        cachedDb = cachedClient.db(dbName);
+        return cachedDb.collection<QueryDocument>('queries');
+      } catch (retryError) {
+        console.error('MongoDB unavailable, falling back to local storage.', retryError);
+        return null;
+      }
+    }
+
     console.error('MongoDB unavailable, falling back to local storage.', error);
     return null;
   }
@@ -47,9 +73,9 @@ export async function getDb() {
   }
 
   try {
-    if (cachedDb) return cachedDb;
+    if (cachedDb && cachedClient && cachedClient.topology.isConnected()) return cachedDb;
 
-    if (!cachedClient) {
+    if (!cachedClient || !cachedClient.topology.isConnected()) {
       cachedClient = new MongoClient(uri);
       await cachedClient.connect();
     }
@@ -57,6 +83,15 @@ export async function getDb() {
     cachedDb = cachedClient.db(dbName);
     return cachedDb;
   } catch (error) {
+    if (isClosedTopologyError(error)) {
+      cachedClient = null;
+      cachedDb = null;
+      cachedClient = new MongoClient(uri);
+      await cachedClient.connect();
+      cachedDb = cachedClient.db(dbName);
+      return cachedDb;
+    }
+
     console.error('MongoDB unavailable', error);
     throw error;
   }

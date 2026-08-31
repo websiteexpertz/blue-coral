@@ -80,6 +80,185 @@ function IcalSettingsForm() {
   );
 }
 
+function ContactInfoSettingsForm() {
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [socialPlatform, setSocialPlatform] = useState('Instagram');
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({
+    Instagram: '',
+    Facebook: '',
+    Twitter: '',
+    Email: '',
+  });
+  const [message, setMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/content')
+      .then((response) => response.json())
+      .then((content) => {
+        const nextEmail = content?.contact?.email || '';
+        const nextPhone = content?.contact?.phone || '';
+        const existingLinks = Array.isArray(content?.footer?.socialLinks) ? content.footer.socialLinks : [];
+        const nextSocialLinks: Record<string, string> = {
+          Instagram: '',
+          Facebook: '',
+          Twitter: '',
+          Email: '',
+        };
+
+        for (const link of existingLinks) {
+          if (link && typeof link.platform === 'string' && typeof link.url === 'string') {
+            nextSocialLinks[link.platform] = link.url;
+          }
+        }
+
+        const firstPlatform =
+          Object.entries(nextSocialLinks).find(([, url]) => url)?.[0] || 'Instagram';
+
+        setEmail(nextEmail);
+        setPhone(nextPhone);
+        setSocialLinks(nextSocialLinks);
+        setSocialPlatform(firstPlatform);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const selectedUrl = socialLinks[socialPlatform] || '';
+
+  const handleSocialPlatformChange = (nextPlatform: string) => {
+    setSocialPlatform(nextPlatform);
+  };
+
+  const onSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      const currentContentResponse = await fetch('/api/admin/content');
+      const currentContent = await currentContentResponse.json();
+
+      const existingLinks = Array.isArray(currentContent?.footer?.socialLinks)
+        ? currentContent.footer.socialLinks
+            .filter((link: { platform?: string; url?: string }) => link && typeof link.platform === 'string')
+            .map((link: { platform?: string; url?: string }) => ({
+              platform: String(link.platform),
+              url: String(link.url || ''),
+            }))
+        : [];
+
+      const mergedLinks: Record<string, string> = {};
+      for (const link of existingLinks) {
+        mergedLinks[link.platform] = link.url;
+      }
+      mergedLinks[socialPlatform] = socialLinks[socialPlatform] || '';
+
+      const nextLinks = Object.entries(mergedLinks)
+        .filter(([platform, url]) => platform && url && String(url).trim())
+        .map(([platform, url]) => ({
+          platform,
+          url: String(url).trim(),
+        }));
+
+      const response = await fetch('/api/admin/content', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...currentContent,
+          contact: {
+            ...(currentContent?.contact || {}),
+            email: email.trim(),
+            phone: phone.trim(),
+          },
+          footer: {
+            ...(currentContent?.footer || {}),
+            socialLinks: nextLinks,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to save contact settings.');
+
+      setMessage('Contact information saved successfully.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to save contact settings.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-black">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="hello@bluecorallanding.com"
+          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-black placeholder:text-black"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-black">Phone number</label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(event) => setPhone(event.target.value)}
+          placeholder="+1 (242) 555-0123"
+          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-black placeholder:text-black"
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+        <div>
+          <label className="block text-sm font-medium text-black">Social platform</label>
+          <select
+            value={socialPlatform}
+            onChange={(event) => handleSocialPlatformChange(event.target.value)}
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-black"
+          >
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Twitter">Twitter</option>
+            <option value="Email">Email</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-black">Social link</label>
+          <input
+            type="url"
+            value={selectedUrl}
+            onChange={(event) =>
+              setSocialLinks((current) => ({
+                ...current,
+                [socialPlatform]: event.target.value,
+              }))
+            }
+            placeholder="https://instagram.com/bluecorallanding"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-black placeholder:text-black"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          disabled={isSaving}
+          type="submit"
+          className="rounded-md bg-primary px-4 py-2 text-white disabled:opacity-60"
+        >
+          {isSaving ? 'Saving...' : 'Save contact info'}
+        </button>
+        {message ? <div className="text-sm text-slate-700">{message}</div> : null}
+      </div>
+    </form>
+  );
+}
+
 function AccountSettingsForm() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newUsername, setNewUsername] = useState('');
@@ -201,6 +380,16 @@ export default function AdminSettingsPage() {
           </p>
         </div>
         <IcalSettingsForm />
+      </div>
+
+      <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-slate-900">Contact info</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Update the public contact details shown in the website footer and inquiry sections.
+          </p>
+        </div>
+        <ContactInfoSettingsForm />
       </div>
 
       <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-[0_25px_80px_rgba(27,79,107,0.06)]">
