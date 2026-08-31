@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -25,7 +26,11 @@ export default function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setError(null);
+    setIsSubmitting(true);
+
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
@@ -40,6 +45,8 @@ export default function LoginPage() {
       router.replace('/admin');
     } catch (err: any) {
       setError(err?.message || 'Network error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -68,7 +75,13 @@ export default function LoginPage() {
           </div>
           {error ? <div className="text-sm text-red-600">{error}</div> : null}
           <div className="pt-2">
-            <button className="w-full rounded-md bg-primary px-4 py-2 text-white">Sign in</button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-md bg-primary px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
+            </button>
           </div>
         </form>
       </div>

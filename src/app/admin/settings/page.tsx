@@ -99,7 +99,9 @@ function ContactInfoSettingsForm() {
       .then((content) => {
         const nextEmail = content?.contact?.email || '';
         const nextPhone = content?.contact?.phone || '';
-        const existingLinks = Array.isArray(content?.footer?.socialLinks) ? content.footer.socialLinks : [];
+        const existingLinks = Array.isArray(content?.footer?.socialLinks)
+          ? content.footer.socialLinks
+          : [];
         const nextSocialLinks: Record<string, string> = {
           Instagram: '',
           Facebook: '',
@@ -141,7 +143,10 @@ function ContactInfoSettingsForm() {
 
       const existingLinks = Array.isArray(currentContent?.footer?.socialLinks)
         ? currentContent.footer.socialLinks
-            .filter((link: { platform?: string; url?: string }) => link && typeof link.platform === 'string')
+            .filter(
+              (link: { platform?: string; url?: string }) =>
+                link && typeof link.platform === 'string'
+            )
             .map((link: { platform?: string; url?: string }) => ({
               platform: String(link.platform),
               url: String(link.url || ''),
