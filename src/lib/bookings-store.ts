@@ -5,9 +5,30 @@ import { clearAvailabilityCache } from '@/lib/availability-store';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'blue-coral';
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: ReturnType<MongoClient['db']> | null = null;
+declare global {
+  var _bookingsStoreClientPromise: Promise<MongoClient> | undefined;
+}
+
+let clientPromise: Promise<MongoClient>;
+
+if (!uri) {
+  console.warn('MONGODB_URI is not defined in environment variables.');
+} else {
+  const options = {
+    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
+    connectTimeoutMS: MONGO_TIMEOUT_MS,
+    socketTimeoutMS: 20000,
+    maxPoolSize: 5,
+  };
+
+  if (!global._bookingsStoreClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._bookingsStoreClientPromise = client.connect().then(() => client);
+  }
+  clientPromise = global._bookingsStoreClientPromise;
+}
 
 export type BookingStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
@@ -116,26 +137,21 @@ function getDateRange(startDate: string, endDate: string) {
 }
 
 async function getBookingCollection(): Promise<Collection<BookingDocument> | null> {
-  if (!uri) {
+  if (!uri || !clientPromise) {
     return null;
   }
 
   try {
-    if (!cachedClient) {
-      cachedClient = new MongoClient(uri);
-      await cachedClient.connect();
-    }
-
-    if (!cachedDb) {
-      cachedDb = cachedClient.db(dbName);
-    }
-
-    const collection = cachedDb.collection<BookingDocument>('bookings');
+    const client = await clientPromise;
+    const db = client.db(dbName);
+    const collection = db.collection<BookingDocument>('bookings');
     await collection.createIndex({ checkIn: 1 });
     await collection.createIndex({ checkOut: 1 });
     await collection.createIndex({ status: 1 });
     return collection;
   } catch (error) {
+    // If the cached promise rejected, reset it so subsequent requests can retry
+    global._bookingsStoreClientPromise = undefined;
     console.error('Booking store unavailable.', error);
     return null;
   }

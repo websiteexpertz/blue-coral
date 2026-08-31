@@ -11,16 +11,30 @@ const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'website-content.json');
 
 const MONGO_URI = process.env.MONGODB_URI;
-const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 3500);
-let mongoClient: MongoClient | null = null;
+const MONGO_DB = process.env.MONGODB_DB || 'blue-coral';
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 
-function createMongoClient() {
-  return new MongoClient(MONGO_URI!, {
+declare global {
+  var _siteContentClientPromise: Promise<MongoClient> | undefined;
+}
+
+let clientPromise: Promise<MongoClient>;
+
+if (!MONGO_URI) {
+  console.warn('MONGODB_URI is not defined in environment variables.');
+} else {
+  const options = {
     serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
     connectTimeoutMS: MONGO_TIMEOUT_MS,
-    socketTimeoutMS: MONGO_TIMEOUT_MS,
-    maxPoolSize: 1,
-  });
+    socketTimeoutMS: 20000,
+    maxPoolSize: 5,
+  };
+
+  if (!global._siteContentClientPromise) {
+    const client = new MongoClient(MONGO_URI, options);
+    global._siteContentClientPromise = client.connect().then(() => client);
+  }
+  clientPromise = global._siteContentClientPromise;
 }
 
 function isClosedTopologyError(error: unknown) {
@@ -36,27 +50,17 @@ function isClosedTopologyError(error: unknown) {
 }
 
 async function getMongoClient() {
-  if (!MONGO_URI) return null;
-
-  try {
-    if (mongoClient) {
-      return mongoClient;
-    }
-  } catch {
-    // ignore and reconnect below
+  if (!MONGO_URI || !clientPromise) {
+    return null;
   }
 
   try {
-    mongoClient = createMongoClient();
-    await Promise.race([
-      mongoClient.connect(),
-      new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
-      }),
-    ]);
-    return mongoClient;
-  } catch {
-    mongoClient = null;
+    const client = await clientPromise;
+    return client;
+  } catch (error) {
+    // If the cached promise rejected, reset it so subsequent requests can retry
+    global._siteContentClientPromise = undefined;
+    console.error('Failed to connect to MongoDB:', error);
     return null;
   }
 }
@@ -105,7 +109,7 @@ async function readDbStorage(): Promise<SiteContentData> {
     return seed;
   } catch (error) {
     console.error('MongoDB read failed, falling back to local storage.', error);
-    mongoClient = null;
+    global._siteContentClientPromise = undefined;
     return readFileStorage();
   }
 }
@@ -123,7 +127,7 @@ async function writeDbStorage(data: SiteContentData) {
     await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
   } catch (error) {
     console.error('MongoDB write failed, falling back to local storage.', error);
-    mongoClient = null;
+    global._siteContentClientPromise = undefined;
     writeFileStorage(data);
   }
 }

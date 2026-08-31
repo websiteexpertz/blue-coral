@@ -2,9 +2,30 @@ import { MongoClient, type Collection } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'blue-coral';
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: ReturnType<MongoClient['db']> | null = null;
+declare global {
+  var _availabilityStoreClientPromise: Promise<MongoClient> | undefined;
+}
+
+let clientPromise: Promise<MongoClient>;
+
+if (!uri) {
+  console.warn('MONGODB_URI is not defined in environment variables.');
+} else {
+  const options = {
+    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
+    connectTimeoutMS: MONGO_TIMEOUT_MS,
+    socketTimeoutMS: 20000,
+    maxPoolSize: 5,
+  };
+
+  if (!global._availabilityStoreClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._availabilityStoreClientPromise = client.connect().then(() => client);
+  }
+  clientPromise = global._availabilityStoreClientPromise;
+}
 
 export interface AvailabilityBooking {
   id: string;
@@ -64,22 +85,16 @@ function collectDates(startDate: Date, endDate: Date): string[] {
 }
 
 async function getBookingCollection(): Promise<Collection<BookingDocument> | null> {
-  if (!uri) {
+  if (!uri || !clientPromise) {
     return null;
   }
 
   try {
-    if (!cachedClient) {
-      cachedClient = new MongoClient(uri);
-      await cachedClient.connect();
-    }
-
-    if (!cachedDb) {
-      cachedDb = cachedClient.db(dbName);
-    }
-
-    return cachedDb.collection<BookingDocument>('bookings');
+    const client = await clientPromise;
+    return client.db(dbName).collection<BookingDocument>('bookings');
   } catch (error) {
+    // If the cached promise rejected, reset it so subsequent requests can retry
+    global._availabilityStoreClientPromise = undefined;
     console.error('Availability store unavailable.', error);
     return null;
   }

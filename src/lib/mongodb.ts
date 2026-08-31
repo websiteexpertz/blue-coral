@@ -1,19 +1,31 @@
-import { MongoClient, type Collection } from 'mongodb';
+import { MongoClient, type Collection, type Db } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'blue-coral';
-const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 3500);
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: ReturnType<MongoClient['db']> | null = null;
+declare global {
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
+}
 
-function createMongoClient() {
-  return new MongoClient(uri!, {
+let clientPromise: Promise<MongoClient>;
+
+if (!uri) {
+  console.warn('MONGODB_URI is not defined in environment variables.');
+} else {
+  const options = {
     serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
     connectTimeoutMS: MONGO_TIMEOUT_MS,
-    socketTimeoutMS: MONGO_TIMEOUT_MS,
-    maxPoolSize: 1,
-  });
+    socketTimeoutMS: 20000,
+    maxPoolSize: 5, // Optimal pool size for Atlas Free Tier
+  };
+
+  // Reuse the connection promise globally across hot-reloads and serverless runs
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect().then(() => client);
+  }
+  clientPromise = global._mongoClientPromise;
 }
 
 export interface QueryDocument {
@@ -28,111 +40,40 @@ export interface QueryDocument {
   createdAt: string;
 }
 
-function isClosedTopologyError(error: unknown) {
-  if (!error || typeof error !== 'object') return false;
-  const message = String((error as { message?: string }).message || '');
-  return (
-    (error as { name?: string }).name === 'MongoTopologyClosedError' ||
-    (error as { name?: string }).name === 'MongoNotConnectedError' ||
-    message.includes('Topology is closed') ||
-    message.includes('topology is closed') ||
-    message.includes('connection pool is closed')
-  );
-}
-
-export async function getQueryCollection(): Promise<Collection<QueryDocument> | null> {
-  if (!uri) {
-    return null;
+export async function getDb(): Promise<Db> {
+  if (!uri || !clientPromise) {
+    throw new Error('MONGODB_URI is not set in environment variables');
   }
 
   try {
-    if (cachedDb && cachedClient && cachedClient.topology.isConnected()) {
-      return cachedDb.collection<QueryDocument>('queries');
-    }
-
-    if (!cachedClient || !cachedClient.topology.isConnected()) {
-      cachedClient = createMongoClient();
-      await Promise.race([
-        cachedClient.connect(),
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
-        }),
-      ]);
-    }
-
-    cachedDb = cachedClient.db(dbName);
-    return cachedDb.collection<QueryDocument>('queries');
+    const client = await clientPromise;
+    return client.db(dbName);
   } catch (error) {
-    if (isClosedTopologyError(error)) {
-      cachedClient = null;
-      cachedDb = null;
-      try {
-        cachedClient = createMongoClient();
-        await Promise.race([
-          cachedClient.connect(),
-          new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
-          }),
-        ]);
-        cachedDb = cachedClient.db(dbName);
-        return cachedDb.collection<QueryDocument>('queries');
-      } catch (retryError) {
-        console.error('MongoDB unavailable, falling back to local storage.', retryError);
-        return null;
-      }
-    }
-
-    console.error('MongoDB unavailable, falling back to local storage.', error);
-    return null;
-  }
-}
-
-export async function getDb() {
-  if (!uri) {
-    throw new Error('MONGODB_URI not set');
-  }
-
-  try {
-    if (cachedDb && cachedClient && cachedClient.topology.isConnected()) return cachedDb;
-
-    if (!cachedClient || !cachedClient.topology.isConnected()) {
-      cachedClient = createMongoClient();
-      await Promise.race([
-        cachedClient.connect(),
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
-        }),
-      ]);
-    }
-
-    cachedDb = cachedClient.db(dbName);
-    return cachedDb;
-  } catch (error) {
-    if (isClosedTopologyError(error)) {
-      cachedClient = null;
-      cachedDb = null;
-      cachedClient = createMongoClient();
-      await Promise.race([
-        cachedClient.connect(),
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
-        }),
-      ]);
-      cachedDb = cachedClient.db(dbName);
-      return cachedDb;
-    }
-
-    console.error('MongoDB unavailable', error);
+    // If the cached promise rejected (e.g. initial network drop), reset it so subsequent requests can retry
+    global._mongoClientPromise = undefined;
+    console.error('Failed to connect to MongoDB:', error);
     throw error;
   }
 }
 
-export async function getBookingsCollection() {
+export async function getQueryCollection(): Promise<Collection<QueryDocument> | null> {
+  try {
+    const db = await getDb();
+    return db.collection<QueryDocument>('queries');
+  } catch (error) {
+    console.error('MongoDB unavailable, falling back to local storage/null.', error);
+    return null;
+  }
+}
+
+export async function getBookingsCollection(): Promise<Collection<any> | null> {
   try {
     const db = await getDb();
     return db.collection('bookings');
   } catch (error) {
-    console.error('Could not get bookings collection', error);
+    console.error('Could not get bookings collection:', error);
     return null;
   }
 }
+
+export default clientPromise!;

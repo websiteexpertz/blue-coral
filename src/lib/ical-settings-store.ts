@@ -4,8 +4,32 @@ import { MongoClient } from 'mongodb';
 
 const MONGO_URI = process.env.MONGODB_URI;
 const MONGO_DB = process.env.MONGODB_DB || 'blue-coral';
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'ical-settings.json');
+
+declare global {
+  var _icalSettingsClientPromise: Promise<MongoClient> | undefined;
+}
+
+let clientPromise: Promise<MongoClient>;
+
+if (!MONGO_URI) {
+  console.warn('MONGODB_URI is not defined in environment variables.');
+} else {
+  const options = {
+    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
+    connectTimeoutMS: MONGO_TIMEOUT_MS,
+    socketTimeoutMS: 20000,
+    maxPoolSize: 5,
+  };
+
+  if (!global._icalSettingsClientPromise) {
+    const client = new MongoClient(MONGO_URI, options);
+    global._icalSettingsClientPromise = client.connect().then(() => client);
+  }
+  clientPromise = global._icalSettingsClientPromise;
+}
 
 export const DEFAULT_ICAL_REFRESH_MINUTES = 5;
 const DEFAULT_ICAL_URL =
@@ -20,8 +44,6 @@ export interface IcalSettings {
 interface IcalSettingsDocument extends IcalSettings {
   _id: string;
 }
-
-let mongoClient: MongoClient | null = null;
 
 function getDefaultSettings(): IcalSettings {
   return {
@@ -60,12 +82,19 @@ function readFileStorage(): IcalSettings {
 }
 
 async function getMongo() {
-  if (!MONGO_URI) return null;
-  if (!mongoClient) {
-    mongoClient = new MongoClient(MONGO_URI);
-    await mongoClient.connect();
+  if (!MONGO_URI || !clientPromise) {
+    return null;
   }
-  return mongoClient;
+
+  try {
+    const client = await clientPromise;
+    return client;
+  } catch (error) {
+    // If the cached promise rejected, reset it so subsequent requests can retry
+    global._icalSettingsClientPromise = undefined;
+    console.error('Failed to connect to MongoDB:', error);
+    return null;
+  }
 }
 
 export async function getIcalSettings(): Promise<IcalSettings> {
