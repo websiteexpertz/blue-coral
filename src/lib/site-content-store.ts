@@ -11,7 +11,17 @@ const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'website-content.json');
 
 const MONGO_URI = process.env.MONGODB_URI;
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 3500);
 let mongoClient: MongoClient | null = null;
+
+function createMongoClient() {
+  return new MongoClient(MONGO_URI!, {
+    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
+    connectTimeoutMS: MONGO_TIMEOUT_MS,
+    socketTimeoutMS: MONGO_TIMEOUT_MS,
+    maxPoolSize: 1,
+  });
+}
 
 function isClosedTopologyError(error: unknown) {
   if (!error || typeof error !== 'object') return false;
@@ -29,20 +39,25 @@ async function getMongoClient() {
   if (!MONGO_URI) return null;
 
   try {
-    if (mongoClient && mongoClient.topology && mongoClient.topology.isConnected()) {
+    if (mongoClient) {
       return mongoClient;
     }
   } catch {
     // ignore and reconnect below
   }
 
-  mongoClient = new MongoClient(MONGO_URI);
   try {
-    await mongoClient.connect();
+    mongoClient = createMongoClient();
+    await Promise.race([
+      mongoClient.connect(),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
+      }),
+    ]);
     return mongoClient;
-  } catch (error) {
+  } catch {
     mongoClient = null;
-    throw error;
+    return null;
   }
 }
 
@@ -79,7 +94,7 @@ async function readDbStorage(): Promise<SiteContentData> {
 
   try {
     const db = client.db();
-    const coll = db.collection('site_content');
+    const coll = db.collection<{ _id: string; content: Partial<SiteContentData> }>('site_content');
     const doc = await coll.findOne({ _id: 'site' });
     if (doc && doc.content) {
       return normalizeSiteContent(doc.content as Partial<SiteContentData>);
@@ -95,7 +110,7 @@ async function readDbStorage(): Promise<SiteContentData> {
     if (!client) return readFileStorage();
 
     const db = client.db();
-    const coll = db.collection('site_content');
+    const coll = db.collection<{ _id: string; content: Partial<SiteContentData> }>('site_content');
     const doc = await coll.findOne({ _id: 'site' });
     if (doc && doc.content) {
       return normalizeSiteContent(doc.content as Partial<SiteContentData>);
@@ -116,7 +131,7 @@ async function writeDbStorage(data: SiteContentData) {
 
   try {
     const db = client.db();
-    const coll = db.collection('site_content');
+    const coll = db.collection<{ _id: string; content: SiteContentData }>('site_content');
     await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
   } catch (error) {
     if (!isClosedTopologyError(error)) throw error;
@@ -128,7 +143,7 @@ async function writeDbStorage(data: SiteContentData) {
     }
 
     const db = client.db();
-    const coll = db.collection('site_content');
+    const coll = db.collection<{ _id: string; content: SiteContentData }>('site_content');
     await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
   }
 }

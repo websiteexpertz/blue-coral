@@ -4,9 +4,19 @@ import { MongoClient, type Collection } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'blue-coral';
+const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 3500);
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: ReturnType<MongoClient['db']> | null = null;
+
+function createMongoClient() {
+  return new MongoClient(uri!, {
+    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
+    connectTimeoutMS: MONGO_TIMEOUT_MS,
+    socketTimeoutMS: MONGO_TIMEOUT_MS,
+    maxPoolSize: 1,
+  });
+}
 
 const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'media.json');
@@ -145,18 +155,25 @@ export async function getMediaCollection(): Promise<Collection<MediaDocument> | 
   }
 
   try {
-    if (cachedDb) {
+    if (cachedDb && cachedClient && cachedClient.topology.isConnected()) {
       return cachedDb.collection<MediaDocument>('site_media');
     }
 
-    if (!cachedClient) {
-      cachedClient = new MongoClient(uri);
-      await cachedClient.connect();
+    if (!cachedClient || !cachedClient.topology.isConnected()) {
+      cachedClient = createMongoClient();
+      await Promise.race([
+        cachedClient.connect(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('MongoDB connection timed out')), MONGO_TIMEOUT_MS);
+        }),
+      ]);
     }
 
     cachedDb = cachedClient.db(dbName);
     return cachedDb.collection<MediaDocument>('site_media');
   } catch (error) {
+    cachedClient = null;
+    cachedDb = null;
     console.error('Media collection unavailable.', error);
     return null;
   }
