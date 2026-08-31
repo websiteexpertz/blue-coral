@@ -99,26 +99,14 @@ async function readDbStorage(): Promise<SiteContentData> {
     if (doc && doc.content) {
       return normalizeSiteContent(doc.content as Partial<SiteContentData>);
     }
-    // seed
+
     const seed = DEFAULT_SITE_CONTENT;
     await coll.updateOne({ _id: 'site' }, { $set: { content: seed } }, { upsert: true });
     return seed;
   } catch (error) {
-    if (!isClosedTopologyError(error)) throw error;
+    console.error('MongoDB read failed, falling back to local storage.', error);
     mongoClient = null;
-    client = await getMongoClient();
-    if (!client) return readFileStorage();
-
-    const db = client.db();
-    const coll = db.collection<{ _id: string; content: Partial<SiteContentData> }>('site_content');
-    const doc = await coll.findOne({ _id: 'site' });
-    if (doc && doc.content) {
-      return normalizeSiteContent(doc.content as Partial<SiteContentData>);
-    }
-
-    const seed = DEFAULT_SITE_CONTENT;
-    await coll.updateOne({ _id: 'site' }, { $set: { content: seed } }, { upsert: true });
-    return seed;
+    return readFileStorage();
   }
 }
 
@@ -134,31 +122,34 @@ async function writeDbStorage(data: SiteContentData) {
     const coll = db.collection<{ _id: string; content: SiteContentData }>('site_content');
     await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
   } catch (error) {
-    if (!isClosedTopologyError(error)) throw error;
+    console.error('MongoDB write failed, falling back to local storage.', error);
     mongoClient = null;
-    client = await getMongoClient();
-    if (!client) {
-      writeFileStorage(data);
-      return;
-    }
-
-    const db = client.db();
-    const coll = db.collection<{ _id: string; content: SiteContentData }>('site_content');
-    await coll.updateOne({ _id: 'site' }, { $set: { content: data } }, { upsert: true });
+    writeFileStorage(data);
   }
 }
 
 export async function getSiteContentData(): Promise<SiteContentData> {
-  if (MONGO_URI) return await readDbStorage();
-  return readFileStorage();
+  try {
+    if (MONGO_URI) return await readDbStorage();
+    return readFileStorage();
+  } catch (error) {
+    console.error('Unable to load site content data, using local fallback.', error);
+    return readFileStorage();
+  }
 }
 
 export async function saveSiteContentData(input: Partial<SiteContentData> | SiteContentData): Promise<SiteContentData> {
   const nextData = normalizeSiteContent(input);
-  if (MONGO_URI) {
-    await writeDbStorage(nextData);
-  } else {
+  try {
+    if (MONGO_URI) {
+      await writeDbStorage(nextData);
+    } else {
+      writeFileStorage(nextData);
+    }
+    return nextData;
+  } catch (error) {
+    console.error('Unable to save site content data, using local fallback.', error);
     writeFileStorage(nextData);
+    return nextData;
   }
-  return nextData;
 }
