@@ -2,30 +2,35 @@ import { MongoClient, type Collection, type Db } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'blue-coral';
-const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-let clientPromise: Promise<MongoClient>;
+const globalCache = globalThis as typeof globalThis & {
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
-if (!uri) {
-  console.warn('MONGODB_URI is not defined in environment variables.');
-} else {
+function createClientPromise(): Promise<MongoClient> {
+  if (!uri) {
+    throw new Error('MONGODB_URI is not defined');
+  }
+
+  const connectionUri = uri.includes('retryReads=') ? uri : `${uri}${uri.includes('?') ? '&' : '?'}retryReads=true`;
+
   const options = {
-    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
-    connectTimeoutMS: MONGO_TIMEOUT_MS,
-    socketTimeoutMS: 20000,
-    maxPoolSize: 5, // Optimal pool size for Atlas Free Tier
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 5,
+    minPoolSize: 1,
+    waitQueueTimeoutMS: 10000,
+    heartbeatFrequencyMS: 10000,
+    serverMonitoringMode: 'stream' as const,
   };
 
-  // Reuse the connection promise globally across hot-reloads and serverless runs
-  if (!global._mongoClientPromise) {
-    const client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect().then(() => client);
-  }
-  clientPromise = global._mongoClientPromise;
+  const client = new MongoClient(connectionUri, options);
+  return client.connect();
 }
 
 export interface QueryDocument {
@@ -41,16 +46,19 @@ export interface QueryDocument {
 }
 
 export async function getDb(): Promise<Db> {
-  if (!uri || !clientPromise) {
+  if (!uri) {
     throw new Error('MONGODB_URI is not set in environment variables');
   }
 
+  if (!globalCache._mongoClientPromise) {
+    globalCache._mongoClientPromise = createClientPromise();
+  }
+
   try {
-    const client = await clientPromise;
+    const client = await globalCache._mongoClientPromise;
     return client.db(dbName);
   } catch (error) {
-    // If the cached promise rejected (e.g. initial network drop), reset it so subsequent requests can retry
-    global._mongoClientPromise = undefined;
+    globalCache._mongoClientPromise = undefined;
     console.error('Failed to connect to MongoDB:', error);
     throw error;
   }
@@ -75,5 +83,3 @@ export async function getBookingsCollection(): Promise<Collection<any> | null> {
     return null;
   }
 }
-
-export default clientPromise!;

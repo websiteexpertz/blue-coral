@@ -1,35 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MongoClient } from 'mongodb';
+
+import { getDb } from '@/lib/mongodb';
 
 const MONGO_URI = process.env.MONGODB_URI;
 const MONGO_DB = process.env.MONGODB_DB || 'blue-coral';
-const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
 const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'ical-settings.json');
-
-declare global {
-  var _icalSettingsClientPromise: Promise<MongoClient> | undefined;
-}
-
-let clientPromise: Promise<MongoClient>;
-
-if (!MONGO_URI) {
-  console.warn('MONGODB_URI is not defined in environment variables.');
-} else {
-  const options = {
-    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
-    connectTimeoutMS: MONGO_TIMEOUT_MS,
-    socketTimeoutMS: 20000,
-    maxPoolSize: 5,
-  };
-
-  if (!global._icalSettingsClientPromise) {
-    const client = new MongoClient(MONGO_URI, options);
-    global._icalSettingsClientPromise = client.connect().then(() => client);
-  }
-  clientPromise = global._icalSettingsClientPromise;
-}
 
 export const DEFAULT_ICAL_REFRESH_MINUTES = 5;
 const DEFAULT_ICAL_URL =
@@ -63,35 +40,49 @@ function normalizeSettings(input: Partial<IcalSettings>): IcalSettings {
   };
 }
 
-function ensureStorage() {
-  if (!existsSync(storageDir)) mkdirSync(storageDir, { recursive: true });
-  if (!existsSync(storageFile)) {
-    writeFileSync(storageFile, JSON.stringify(getDefaultSettings(), null, 2), 'utf8');
+function readFileStorage(): IcalSettings {
+  try {
+    if (!existsSync(storageDir)) {
+      mkdirSync(storageDir, { recursive: true });
+    }
+    if (existsSync(storageFile)) {
+      return normalizeSettings(JSON.parse(readFileSync(storageFile, 'utf8')));
+    }
+  } catch (error) {
+    // Silently handle read-only filesystem or parse errors
+    if ((error as NodeJS.ErrnoException).code === 'EROFS') {
+      console.warn('Local storage is read-only (Vercel/Lambda environment)');
+    } else {
+      console.warn('Could not read local storage:', error);
+    }
   }
+  return getDefaultSettings();
 }
 
-function readFileStorage(): IcalSettings {
-  ensureStorage();
+function writeFileStorage(settings: IcalSettings): void {
   try {
-    return normalizeSettings(JSON.parse(readFileSync(storageFile, 'utf8')));
-  } catch {
-    const defaults = getDefaultSettings();
-    writeFileSync(storageFile, JSON.stringify(defaults, null, 2), 'utf8');
-    return defaults;
+    if (!existsSync(storageDir)) {
+      mkdirSync(storageDir, { recursive: true });
+    }
+    writeFileSync(storageFile, JSON.stringify(settings, null, 2), 'utf8');
+  } catch (error) {
+    // Silently handle read-only filesystem errors in production
+    if ((error as NodeJS.ErrnoException).code === 'EROFS') {
+      console.warn('Skipping file write: local storage is read-only (Vercel/Lambda environment)');
+    } else {
+      console.error('Could not write to local storage:', error);
+    }
   }
 }
 
 async function getMongo() {
-  if (!MONGO_URI || !clientPromise) {
+  if (!MONGO_URI) {
     return null;
   }
 
   try {
-    const client = await clientPromise;
-    return client;
+    return await getDb();
   } catch (error) {
-    // If the cached promise rejected, reset it so subsequent requests can retry
-    global._icalSettingsClientPromise = undefined;
     console.error('Failed to connect to MongoDB:', error);
     return null;
   }
@@ -119,8 +110,7 @@ export async function saveIcalSettings(input: Partial<IcalSettings>): Promise<Ic
   const settings = normalizeSettings({ ...input, updatedAt: new Date().toISOString() });
   const client = await getMongo();
   if (!client) {
-    ensureStorage();
-    writeFileSync(storageFile, JSON.stringify(settings, null, 2), 'utf8');
+    writeFileStorage(settings);
     return settings;
   }
 

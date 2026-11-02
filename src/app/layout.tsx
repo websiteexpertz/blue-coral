@@ -3,8 +3,10 @@ import type { Metadata, Viewport } from 'next';
 import { Fraunces, DM_Sans } from 'next/font/google';
 import '../styles/tailwind.css';
 import SiteContentProvider from './components/site/SiteContentProvider';
+import AgencyAttribution from './components/AgencyAttribution';
 import { getSiteContentData } from '@/lib/site-content-store';
 import { getMediaDocuments } from '@/lib/media-store';
+import { infycrestAttribution } from '@/config/infycrest-attribution';
 
 function resolveImageFromMedia(media: any[], key?: string) {
   if (!key) return undefined;
@@ -45,6 +47,16 @@ try {
 
 export const metadata: Metadata = {
   metadataBase: metadataBaseUrl,
+  ...(infycrestAttribution.enabled
+    ? {
+        authors: [{ name: infycrestAttribution.agencyName }],
+        other: {
+          author: infycrestAttribution.agencyName,
+          agency: infycrestAttribution.agencyName,
+          'agency-website': infycrestAttribution.agencyWebsite,
+        },
+      }
+    : {}),
   title: 'Blue Coral Landing — Luxury Waterfront Villa in the Bahamas',
   description:
     "Blue Coral Landing is a four-bedroom luxury waterfront villa on Great Guana Cay, Bahamas. Stunning Fisher's Bay views, private dock access, and world-class amenities from $650/night.",
@@ -124,6 +136,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body suppressHydrationWarning className={dmSans.className}>
+        <AgencyAttribution />
         <SiteContentProvider initialContent={siteContent}>{children}</SiteContentProvider>
         <script
           type="application/ld+json"
@@ -135,6 +148,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               description:
                 "Luxury four-bedroom waterfront villa overlooking Fisher's Bay, Great Guana Cay, Bahamas.",
               url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+              ...(infycrestAttribution.enabled
+                ? {
+                    creator: {
+                      '@type': 'Organization',
+                      name: infycrestAttribution.agencyName,
+                      url: infycrestAttribution.agencyWebsite,
+                    },
+                  }
+                : {}),
               address: {
                 '@type': 'PostalAddress',
                 addressLocality: 'Great Guana Cay',

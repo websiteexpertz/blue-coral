@@ -1,1 +1,244 @@
-[]
+[
+  {
+    "id": "hero-hero-1788169762740-k3jlin",
+    "section": "hero",
+    "key": "hero",
+    "alt": "Hero image",
+    "url": "/12.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "about-about-1788169762740-3pwdzb",
+    "section": "about",
+    "key": "about",
+    "alt": "About image",
+    "url": "/35.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "contact-contact-1788169762740-5dho65",
+    "section": "contact",
+    "key": "contact",
+    "alt": "Contact image",
+    "url": "/33.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "logo-logo-1788169762740-idwvop",
+    "section": "logo",
+    "key": "logo",
+    "alt": "Brand logo",
+    "url": "/logo.png",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "villa-hero-villa-hero-1788169762740-284e1t",
+    "section": "villa-hero",
+    "key": "villa-hero",
+    "alt": "Villa hero image",
+    "url": "/12.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "villa-about-1-villa-about-1-1788169762740-99dngw",
+    "section": "villa-about-1",
+    "key": "villa-about-1",
+    "alt": "Villa detail image",
+    "url": "/12.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "villa-about-2-villa-about-2-1788169762740-9w7ooz",
+    "section": "villa-about-2",
+    "key": "villa-about-2",
+    "alt": "Villa detail image",
+    "url": "/13.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "villa-activities-villa-activities-1788169762740-o6vy4u",
+    "section": "villa-activities",
+    "key": "villa-activities",
+    "alt": "Activities image",
+    "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "villa-location-villa-location-1788169762740-oju3s5",
+    "section": "villa-location",
+    "key": "villa-location",
+    "alt": "Location image",
+    "url": "https://images.unsplash.com/photo-1468413253725-0d5181091126",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-beach-nearby-beach-1788169762740-rt6b79",
+    "section": "nearby-beach",
+    "key": "nearby-beach",
+    "alt": "Beach image",
+    "url": "/12.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-restaurants-nearby-restaurants-1788169762740-538mib",
+    "section": "nearby-restaurants",
+    "key": "nearby-restaurants",
+    "alt": "Restaurant image",
+    "url": "/13.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-grocery-nearby-grocery-1788169762740-49io02",
+    "section": "nearby-grocery",
+    "key": "nearby-grocery",
+    "alt": "Grocery image",
+    "url": "/16.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-dock-nearby-dock-1788169762740-g91vg0",
+    "section": "nearby-dock",
+    "key": "nearby-dock",
+    "alt": "Dock image",
+    "url": "/17.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-island-nearby-island-1788169762740-c78sp9",
+    "section": "nearby-island",
+    "key": "nearby-island",
+    "alt": "Island image",
+    "url": "/20.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "nearby-map-nearby-map-1788169762740-0k4r9a",
+    "section": "nearby-map",
+    "key": "nearby-map",
+    "alt": "Map image",
+    "url": "/21.jpg",
+    "order": 0,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-homepage-1-1788169762740-pq11kw",
+    "section": "gallery",
+    "type": "homepage",
+    "key": "gallery-homepage-1",
+    "alt": "Homepage image 1",
+    "url": "/3.jpg",
+    "order": 1,
+    "position": 1,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-homepage-2-1788169762740-0jd8uc",
+    "section": "gallery",
+    "type": "homepage",
+    "key": "gallery-homepage-2",
+    "alt": "Homepage image 2",
+    "url": "/4.jpg",
+    "order": 2,
+    "position": 2,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-homepage-3-1788169762740-7omne0",
+    "section": "gallery",
+    "type": "homepage",
+    "key": "gallery-homepage-3",
+    "alt": "Homepage image 3",
+    "url": "/5.jpg",
+    "order": 3,
+    "position": 3,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-homepage-4-1788169762740-jnods4",
+    "section": "gallery",
+    "type": "homepage",
+    "key": "gallery-homepage-4",
+    "alt": "Homepage image 4",
+    "url": "/6.jpg",
+    "order": 4,
+    "position": 4,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-full-1-1788169762740-knzn5c",
+    "section": "gallery",
+    "type": "full",
+    "key": "gallery-full-1",
+    "alt": "Gallery image 1",
+    "url": "/3.jpg",
+    "order": 1,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-full-2-1788169762740-5b32rf",
+    "section": "gallery",
+    "type": "full",
+    "key": "gallery-full-2",
+    "alt": "Gallery image 2",
+    "url": "/4.jpg",
+    "order": 2,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-full-3-1788169762740-pnbs1y",
+    "section": "gallery",
+    "type": "full",
+    "key": "gallery-full-3",
+    "alt": "Gallery image 3",
+    "url": "/5.jpg",
+    "order": 3,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  },
+  {
+    "id": "gallery-gallery-full-4-1788169762740-voy08n",
+    "section": "gallery",
+    "type": "full",
+    "key": "gallery-full-4",
+    "alt": "Gallery image 4",
+    "url": "/6.jpg",
+    "order": 4,
+    "createdAt": "2026-08-31T09:49:22.740Z",
+    "updatedAt": "2026-08-31T09:49:22.740Z"
+  }
+]

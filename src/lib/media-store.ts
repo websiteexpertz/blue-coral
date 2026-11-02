@@ -1,33 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MongoClient, type Collection } from 'mongodb';
+import type { Collection } from 'mongodb';
+
+import { getDb } from '@/lib/mongodb';
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || 'blue-coral';
-const MONGO_TIMEOUT_MS = Number(process.env.MONGO_TIMEOUT_MS || 5000);
-
-declare global {
-  var _mediaStoreClientPromise: Promise<MongoClient> | undefined;
-}
-
-let clientPromise: Promise<MongoClient>;
-
-if (!uri) {
-  console.warn('MONGODB_URI is not defined in environment variables.');
-} else {
-  const options = {
-    serverSelectionTimeoutMS: MONGO_TIMEOUT_MS,
-    connectTimeoutMS: MONGO_TIMEOUT_MS,
-    socketTimeoutMS: 20000,
-    maxPoolSize: 5,
-  };
-
-  if (!global._mediaStoreClientPromise) {
-    const client = new MongoClient(uri, options);
-    global._mediaStoreClientPromise = client.connect().then(() => client);
-  }
-  clientPromise = global._mediaStoreClientPromise;
-}
 
 const storageDir = join(process.cwd(), 'data');
 const storageFile = join(storageDir, 'media.json');
@@ -43,19 +20,39 @@ function ensureStorage() {
 }
 
 function readStorage(): MediaDocument[] {
-  ensureStorage();
   try {
-    const raw = readFileSync(storageFile, 'utf8');
-    return JSON.parse(raw) as MediaDocument[];
-  } catch {
-    writeFileSync(storageFile, JSON.stringify([]), 'utf8');
-    return [];
+    if (!existsSync(storageDir)) {
+      mkdirSync(storageDir, { recursive: true });
+    }
+    if (existsSync(storageFile)) {
+      const raw = readFileSync(storageFile, 'utf8');
+      return JSON.parse(raw) as MediaDocument[];
+    }
+  } catch (error) {
+    // Silently handle read-only filesystem or parse errors
+    if ((error as NodeJS.ErrnoException).code === 'EROFS') {
+      console.warn('Local storage is read-only (Vercel/Lambda environment)');
+    } else {
+      console.warn('Could not read local storage:', error);
+    }
   }
+  return [];
 }
 
 function writeStorage(items: MediaDocument[]) {
-  ensureStorage();
-  writeFileSync(storageFile, JSON.stringify(items, null, 2), 'utf8');
+  try {
+    if (!existsSync(storageDir)) {
+      mkdirSync(storageDir, { recursive: true });
+    }
+    writeFileSync(storageFile, JSON.stringify(items, null, 2), 'utf8');
+  } catch (error) {
+    // Silently handle read-only filesystem errors in production
+    if ((error as NodeJS.ErrnoException).code === 'EROFS') {
+      console.warn('Skipping file write: local storage is read-only (Vercel/Lambda environment)');
+    } else {
+      console.error('Could not write to local storage:', error);
+    }
+  }
 }
 
 function createId(section: string, key: string) {
@@ -161,16 +158,14 @@ export const DEFAULT_MEDIA_SEED: Omit<MediaDocument, 'id' | 'createdAt' | 'updat
 ];
 
 export async function getMediaCollection(): Promise<Collection<MediaDocument> | null> {
-  if (!uri || !clientPromise) {
+  if (!uri) {
     return null;
   }
 
   try {
-    const client = await clientPromise;
-    return client.db(dbName).collection<MediaDocument>('site_media');
+    const db = await getDb();
+    return db.collection<MediaDocument>('site_media');
   } catch (error) {
-    // If the cached promise rejected, reset it so subsequent requests can retry
-    global._mediaStoreClientPromise = undefined;
     console.error('Media collection unavailable.', error);
     return null;
   }
